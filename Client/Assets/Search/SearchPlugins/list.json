@@ -685,7 +685,7 @@
     "sv-SE": {
       "default": {
         "visibleDefaultEngines": [
-          "google", "prisjakt-sv-SE", "twitter", "wikipedia-sv-SE"
+          "google", "Bing-se-SV", "yahoo-se-SV", "prisjakt-sv-SE", "twitter", "wikipedia-sv-SE"
         ]
       }
     },
