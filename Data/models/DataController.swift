@@ -8,7 +8,7 @@ import XCGLogger
 private let log = Logger.browserLogger
 
 public class DataController: NSObject {
-    public static let shared = DataController()
+    public private(set) static var shared: DataController? = DataController()
     
     private lazy var container: NSPersistentContainer = {
         let modelName = "Model"
@@ -20,6 +20,13 @@ public class DataController: NSObject {
         }
         
         let container = NSPersistentContainer(name: modelName, managedObjectModel: mom)
+        
+        if AppConstants.IsRunningTest {
+            let description = NSPersistentStoreDescription()
+            description.type = NSInMemoryStoreType
+            
+            container.persistentStoreDescriptions = [description]
+        }
         
         // Dev note: This completion handler might be misleading: the persistent store is loaded synchronously by default.
         container.loadPersistentStores(completionHandler: { _, error in
@@ -49,22 +56,34 @@ public class DataController: NSObject {
             return
         }
         
-        context.perform {
-            if !context.hasChanges { return }
-            
-            do {
-                try context.save()
-            } catch {
-                assertionFailure("Error saving DB: \(error)")
-            }
+        if !context.hasChanges { return }
+        
+        do {
+            try context.save()
+        } catch {
+            assertionFailure("Error saving DB: \(error)")
         }
     }
     
     public static var mainContext: NSManagedObjectContext {
-        return DataController.shared.mainThreadContext
+        guard let shared = DataController.shared else {
+            fatalError("Data controller is nil")
+        }
+        return shared.mainThreadContext
     }
     
     public static var backgroundContext: NSManagedObjectContext {
-        return DataController.shared.backgroundThreadContext
+        guard let shared = DataController.shared else {
+            fatalError("Data controller is nil")
+        }
+        return shared.backgroundThreadContext
+    }
+    
+    public static func resetDatabase() {
+        // Only available in testing enviroment
+        if !AppConstants.IsRunningTest { return }
+        
+        DataController.shared = nil
+        DataController.shared = DataController()
     }
 }
