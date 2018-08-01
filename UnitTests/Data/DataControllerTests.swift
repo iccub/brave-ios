@@ -15,7 +15,7 @@ class DataControllerTests: CoreDataTestCase {
     }
     
     func testStoreIsEmpty() {
-        // Checking main and background contexts with TopSite model
+        // Checking main and background contexts with TopSite entity
         let mainContext = DataController.mainContext
         XCTAssertEqual(try! mainContext.count(for: fetchRequest), 0)
         
@@ -72,18 +72,17 @@ class DataControllerTests: CoreDataTestCase {
     func testRemoveObject() {
         let context = DataController.backgroundContext
         
-        contextSaveExpectation()
-        
         let object = TopSite(entity: entity(for: context), insertInto: context)
         DataController.save(context)
         
         var result = try! context.fetch(fetchRequest)
         XCTAssertEqual(result.count, 1)
         
+        contextSaveExpectation()
         object.delete()
         waitForExpectations(timeout: 1, handler: nil)
         
-        result = try! context.fetch(fetchRequest)
+        result = try! DataController.mainContext.fetch(fetchRequest)
         
         XCTAssertEqual(result.count, 0)
     }
