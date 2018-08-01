@@ -19,8 +19,8 @@ class DataControllerTests: CoreDataTestCase {
         let mainContext = DataController.mainContext
         XCTAssertEqual(try! mainContext.count(for: fetchRequest), 0)
         
-        let workerContext = DataController.backgroundContext
-        XCTAssertEqual(try! workerContext.count(for: fetchRequest), 0)
+        let backgroundContext = DataController.backgroundContext
+        XCTAssertEqual(try! backgroundContext.count(for: fetchRequest), 0)
         
         // Checking rest of entities
         let bookmarkFR = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: Bookmark.self))
@@ -54,7 +54,7 @@ class DataControllerTests: CoreDataTestCase {
         XCTAssertEqual(result.count, 1)
     }
     
-    func testSavingWorkerContext() {
+    func testSavingBackgroundContext() {
         let context = DataController.backgroundContext
         
         contextSaveExpectation()
@@ -66,6 +66,9 @@ class DataControllerTests: CoreDataTestCase {
         waitForExpectations(timeout: 1, handler: nil)
         
         XCTAssertEqual(result.count, 1)
+        
+        // Check if object got updated on main context(merge from parent check)
+        XCTAssertEqual(try! DataController.mainContext.fetch(fetchRequest).count, 1)
     }
     
     func testSaveAndRemove() {
