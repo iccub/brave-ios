@@ -8,6 +8,7 @@ import CoreData
 
 class CoreDataTestCase: XCTestCase {
     
+    // Always call super.setUp() in your subclasses to reset the database.
     override func setUp() {
         DataController.resetDatabase()
         

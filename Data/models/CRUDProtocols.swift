@@ -14,7 +14,7 @@ typealias CRUD = Readable & Deletable
 
 public protocol Deletable where Self: NSManagedObject {
     func delete()
-    static func deleteAll(predicate: NSPredicate?)
+    static func deleteAll(where predicate: NSPredicate?)
 }
 
 public protocol Readable where Self: NSManagedObject {
@@ -29,22 +29,11 @@ public extension Deletable where Self: NSManagedObject {
     func delete() {
         let context = self.managedObjectContext ?? DataController.backgroundContext
         
-        context.perform {
-            context.delete(self)
-            if !context.hasChanges {
-                log.debug("Wanting to remove object \(self) but context registered no changes.")
-                return
-            }
-            
-            do {
-                try context.save()
-            } catch {
-                log.debug("Failed to save context after removing object \(self), error: \(error)")
-            }
-        }
+        context.delete(self)
+        DataController.save(context)
     }
     
-    static func deleteAll(predicate: NSPredicate? = nil) {
+    static func deleteAll(where predicate: NSPredicate? = nil) {
         let context = DataController.backgroundContext
         let request = getFetchRequest()
         
@@ -79,7 +68,7 @@ public extension Readable where Self: NSManagedObject {
         return nil
     }
     
-    static func first(where predicate: NSPredicate?, context: NSManagedObjectContext = DataController.mainContext) -> Self? {
+    static func first(where predicate: NSPredicate? = nil, context: NSManagedObjectContext = DataController.mainContext) -> Self? {
         return all(where: predicate, fetchLimit: 1, context: context)?.first
     }
     

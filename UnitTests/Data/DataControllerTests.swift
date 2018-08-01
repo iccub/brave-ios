@@ -7,7 +7,7 @@ import CoreData
 @testable import Data
 
 class DataControllerTests: CoreDataTestCase {
-    // TopSite is the simplest model we have to test DataController internals.
+    // TopSite is the simplest model we have for testing DataController internals.
     let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: TopSite.self))
     
     private func entity(for context: NSManagedObjectContext) -> NSEntityDescription {
@@ -68,8 +68,7 @@ class DataControllerTests: CoreDataTestCase {
         XCTAssertEqual(result.count, 1)
     }
     
-    // TODO: This probably falls into CRUDProtocolTests.
-    func testRemoveObject() {
+    func testSaveAndRemove() {
         let context = DataController.backgroundContext
         
         let object = TopSite(entity: entity(for: context), insertInto: context)
