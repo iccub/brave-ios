@@ -27,14 +27,13 @@ public protocol Readable where Self: NSManagedObject {
 // MARK: - Implementations
 public extension Deletable where Self: NSManagedObject {
     func delete() {
-        let context = self.managedObjectContext ?? DataController.backgroundContext
-        
+        let context = self.managedObjectContext ?? DataController.newBackgroundContext()
         context.delete(self)
-        DataController.save(context)
+        DataController.save(context: context)
     }
     
     static func deleteAll(where predicate: NSPredicate? = nil) {
-        let context = DataController.backgroundContext
+        let context = DataController.newBackgroundContext()
         let request = getFetchRequest()
         
         request.predicate = predicate
@@ -45,7 +44,7 @@ public extension Deletable where Self: NSManagedObject {
                 context.delete($0)
             }
             
-            DataController.save(context)
+            DataController.save(context: context)
         } catch {
             log.error("Delete all error: \(error)")
         }
@@ -54,7 +53,7 @@ public extension Deletable where Self: NSManagedObject {
 
 public extension Readable where Self: NSManagedObject { 
     static func count(predicate: NSPredicate? = nil) -> Int? {
-        let context = DataController.mainContext
+        let context = DataController.viewContext
         let request = getFetchRequest()
         
         request.predicate = predicate
@@ -68,12 +67,12 @@ public extension Readable where Self: NSManagedObject {
         return nil
     }
     
-    static func first(where predicate: NSPredicate? = nil, context: NSManagedObjectContext = DataController.mainContext) -> Self? {
+    static func first(where predicate: NSPredicate?, context: NSManagedObjectContext = DataController.viewContext) -> Self? {
         return all(where: predicate, fetchLimit: 1, context: context)?.first
     }
     
     static func all(where predicate: NSPredicate? = nil, sortDescriptors: [NSSortDescriptor]? = nil, 
-                       fetchLimit: Int = 0, context: NSManagedObjectContext = DataController.mainContext) -> [Self]? {
+                       fetchLimit: Int = 0, context: NSManagedObjectContext = DataController.viewContext) -> [Self]? {
         let request = getFetchRequest()
         
         request.predicate = predicate

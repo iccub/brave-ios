@@ -16,10 +16,10 @@ class DataControllerTests: CoreDataTestCase {
     
     func testStoreIsEmpty() {
         // Checking main and background contexts with TopSite entity
-        let mainContext = DataController.mainContext
+        let mainContext = DataController.viewContext
         XCTAssertEqual(try! mainContext.count(for: fetchRequest), 0)
         
-        let backgroundContext = DataController.backgroundContext
+        let backgroundContext = DataController.newBackgroundContext()
         XCTAssertEqual(try! backgroundContext.count(for: fetchRequest), 0)
         
         // Checking rest of entities
@@ -45,22 +45,22 @@ class DataControllerTests: CoreDataTestCase {
     }
     
     func testSavingMainContext() {
-        let context = DataController.mainContext
+        let context = DataController.viewContext
         
         _ = TopSite(entity: entity(for: context), insertInto: context)
-        DataController.save(context)
+        DataController.save(context: context)
         
         let result = try! context.fetch(fetchRequest)
         XCTAssertEqual(result.count, 1)
     }
     
     func testSavingBackgroundContext() {
-        let context = DataController.backgroundContext
+        let context = DataController.newBackgroundContext()
         
         contextSaveExpectation()
         
         _ = TopSite(entity: entity(for: context), insertInto: context)
-        DataController.save(context)
+        DataController.save(context: context)
         
         let result = try! context.fetch(fetchRequest)
         waitForExpectations(timeout: 1, handler: nil)
@@ -68,14 +68,14 @@ class DataControllerTests: CoreDataTestCase {
         XCTAssertEqual(result.count, 1)
         
         // Check if object got updated on main context(merge from parent check)
-        XCTAssertEqual(try! DataController.mainContext.fetch(fetchRequest).count, 1)
+        XCTAssertEqual(try! DataController.viewContext.fetch(fetchRequest).count, 1)
     }
     
     func testSaveAndRemove() {
-        let context = DataController.backgroundContext
+        let context = DataController.newBackgroundContext()
         
         let object = TopSite(entity: entity(for: context), insertInto: context)
-        DataController.save(context)
+        DataController.save(context: context)
         
         var result = try! context.fetch(fetchRequest)
         XCTAssertEqual(result.count, 1)
@@ -84,7 +84,7 @@ class DataControllerTests: CoreDataTestCase {
         object.delete()
         waitForExpectations(timeout: 1, handler: nil)
         
-        result = try! DataController.mainContext.fetch(fetchRequest)
+        result = try! DataController.viewContext.fetch(fetchRequest)
         
         XCTAssertEqual(result.count, 0)
     }

@@ -73,7 +73,7 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, Syncable, CRUD
     }
 
     public class func frc(parentFolder: Bookmark?) -> NSFetchedResultsController<NSFetchRequestResult> {
-        let context = DataController.mainContext
+        let context = DataController.viewContext
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>()
         
         fetchRequest.entity = Bookmark.entity(context: context)
@@ -125,7 +125,7 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, Syncable, CRUD
         }
         
         if save {
-            DataController.save(self.managedObjectContext)
+            DataController.save(context: self.managedObjectContext)
         }
         
         if !isFavorite {
@@ -143,7 +143,9 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, Syncable, CRUD
     }
     
     // Should not be used for updating, modify to increase protection
-    class func add(rootObject root: SyncBookmark?, save: Bool = false, sendToSync: Bool = false, parentFolder: Bookmark? = nil, color: UIColor? = nil, context: NSManagedObjectContext = DataController.backgroundContext) {
+    class func add(rootObject root: SyncBookmark?, save: Bool = false, sendToSync: Bool = false, parentFolder: Bookmark? = nil, color: UIColor? = nil) {
+        let context = DataController.newBackgroundContext()
+        
         let bookmark = root
         let site = bookmark?.site
         
@@ -192,7 +194,7 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, Syncable, CRUD
         }
         
         if save {
-            DataController.save(context)
+            DataController.save(context: context)
         }
         
         if sendToSync && !bk.isFavorite {
@@ -220,14 +222,7 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, Syncable, CRUD
         bookmark.parentFolderObjectId = parentFolder?.syncUUID
         bookmark.site = site
         
-        let context = DataController.backgroundContext
-        
-        var folderOnWorkerContext: Bookmark?
-        if let folder = parentFolder {
-            folderOnWorkerContext = (try? context.existingObject(with: folder.objectID)) as? Bookmark
-        }
-        
-        add(rootObject: bookmark, save: true, sendToSync: true, parentFolder: folderOnWorkerContext, color: color, context: context)
+        add(rootObject: bookmark, save: true, sendToSync: true, parentFolder: parentFolder, color: color)
     }
 
     public class func contains(url: URL, getFavorites: Bool = false) -> Bool {
@@ -265,7 +260,7 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, Syncable, CRUD
         // If I save while the animation is happening, the rows look screwed up (draw on top of each other).
         // Adding a delay to let animation complete avoids this problem
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(250)) {
-            DataController.save(frc?.managedObjectContext)
+            DataController.save(context: frc?.managedObjectContext)
         }
 
     }
@@ -273,25 +268,17 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, Syncable, CRUD
 
 // TODO: Document well
 // MARK: - Getters
-extension Bookmark {
-    fileprivate static func get(forUrl url: URL, countOnly: Bool = false, getFavorites: Bool = false, context: NSManagedObjectContext) -> [Bookmark]? {
-        let urlKeyPath = #keyPath(Bookmark.url)
-        let isFavoriteKeyPath = #keyPath(Bookmark.isFavorite)
-        
-        let isFavoritePredicate = getFavorites ? "YES" : "NO"
-        let predicate = NSPredicate(format: "\(urlKeyPath) == %@ AND \(isFavoriteKeyPath) == \(isFavoritePredicate)", url.absoluteString)
-        
-        return all(where: predicate)
+extension Bookmark {    
+    fileprivate static func count(forUrl url: URL, getFavorites: Bool = false) -> Int? {
+        let predicate = isFavoriteOrBookmarkByUrlPredicate(url: url, getFavorites: getFavorites)
+        return count(predicate: predicate)
     }
     
-    fileprivate static func count(forUrl url: URL, getFavorites: Bool = false) -> Int? {
+    private static func isFavoriteOrBookmarkByUrlPredicate(url: URL, getFavorites: Bool) -> NSPredicate {
         let urlKeyPath = #keyPath(Bookmark.url)
         let isFavoriteKeyPath = #keyPath(Bookmark.isFavorite)
         
-        let isFavoritePredicate = getFavorites ? "YES" : "NO"
-        let predicate = NSPredicate(format: "\(urlKeyPath) == %@ AND \(isFavoriteKeyPath) == \(isFavoritePredicate)", url.absoluteString)
-        
-        return count(predicate: predicate)
+        return NSPredicate(format: "\(urlKeyPath) == %@ AND \(isFavoriteKeyPath) == \(NSNumber(value: getFavorites))", url.absoluteString)
     }
     
     public static func getChildren(forFolderUUID syncUUID: [Int]?, ignoreFolders: Bool = false) -> [Bookmark]? {
@@ -333,17 +320,12 @@ extension Bookmark {
         
         return all(where: predicate) ?? []
     }
-}
-
-// TODO: REMOVE!! This should be located in abstraction
-extension Bookmark {
-    @discardableResult
-    public class func remove(forUrl url: URL, save: Bool = true, context: NSManagedObjectContext) -> Bool {
-        if let bm = get(forUrl: url, context: context)?.first {
-            bm.remove(save: save)
-            return true
-        }
-        return false
+    
+    public class func remove(forUrl url: URL) {
+        let context = DataController.newBackgroundContext()
+        let predicate = isFavoriteOrBookmarkByUrlPredicate(url: url, getFavorites: false)
+        
+        let record = first(where: predicate, context: context)
+        record?.delete()
     }
 }
-

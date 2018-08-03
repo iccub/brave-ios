@@ -47,7 +47,7 @@ public final class Device: NSManagedObject, Syncable, CRUD {
         device.update(syncRecord: root)
         
         if save {
-            DataController.save(context)
+            DataController.save(context: context)
         }
         
         return device
@@ -68,7 +68,7 @@ public final class Device: NSManagedObject, Syncable, CRUD {
     public static func currentDevice() -> Device? {
         
         if sharedCurrentDevice == nil {
-            let context = DataController.backgroundContext
+            let context = DataController.newBackgroundContext()
             // Create device
             let predicate = NSPredicate(format: "isCurrentDevice = YES")
             // Should only ever be one current device!
@@ -78,7 +78,7 @@ public final class Device: NSManagedObject, Syncable, CRUD {
                 // Create
                 localDevice = add(context: context)
                 localDevice?.isCurrentDevice = true
-                DataController.save(context)
+                DataController.save(context: context)
             }
             
             sharedCurrentDevice = localDevice
@@ -87,7 +87,7 @@ public final class Device: NSManagedObject, Syncable, CRUD {
     }
     
     public class func deleteAll() {
-        let context = DataController.backgroundContext
+        let context = DataController.newBackgroundContext()
         context.perform {
             let fetchRequest = NSFetchRequest<NSFetchRequestResult>()
             fetchRequest.entity = Device.entity(context: context)
@@ -106,7 +106,7 @@ public final class Device: NSManagedObject, Syncable, CRUD {
             // Destroy handle to local device instance, otherwise it is locally retained and will throw console errors
             sharedCurrentDevice = nil
             
-            DataController.save(context)
+            DataController.save(context: context)
         }
     }
     

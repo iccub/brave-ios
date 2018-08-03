@@ -24,14 +24,14 @@ class CRUDProtocolsTests: CoreDataTestCase {
     }
     
     private func insertObjects(count: Int) {
-        let context = DataController.mainContext
+        let context = DataController.viewContext
         
         for i in 1...count {
             let object = CRUDClass(entity: entity(for: context), insertInto: context)
             object.title = "\(i)"
         }
         
-        DataController.save(context)
+        DataController.save(context: context)
         
         // Make sure each test case has the same amount of records to work with.
         XCTAssertEqual(try! context.count(for: fetchRequest), count)
@@ -102,7 +102,7 @@ class CRUDProtocolsTests: CoreDataTestCase {
         first?.delete()
         waitForExpectations(timeout: 1, handler: nil)
         
-        XCTAssertEqual(try! DataController.mainContext.count(for: fetchRequest), initialObjectsCount - 1)
+        XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), initialObjectsCount - 1)
         
         // Verify the correct object got deleted.
         let firstAfterDelete = firstObject(title: title)
@@ -111,17 +111,17 @@ class CRUDProtocolsTests: CoreDataTestCase {
 
     func testDeleteAll() {
         CRUDClass.deleteAll()
-        XCTAssertEqual(try! DataController.mainContext.count(for: fetchRequest), 0)
+        XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), 0)
     }
     
     func testDeleteAllWithPredicate() {
         let predicate = NSPredicate(format: "title = %@ OR title = %@", "1", "2")
         CRUDClass.deleteAll(where: predicate)
-        XCTAssertEqual(try! DataController.mainContext.count(for: fetchRequest), initialObjectsCount - 2)
+        XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), initialObjectsCount - 2)
     }
     
     func testDeleteAllNotMatchingPredicate() {
         CRUDClass.deleteAll(where: notMatchingPredicate)
-        XCTAssertEqual(try! DataController.mainContext.count(for: fetchRequest), initialObjectsCount)
+        XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), initialObjectsCount)
     }
 }

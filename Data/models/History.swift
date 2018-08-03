@@ -56,7 +56,7 @@ public final class History: NSManagedObject, WebsitePresentable, CRUD {
     }
 
     public class func add(_ title: String, url: URL) {
-        let context = DataController.backgroundContext
+        let context = DataController.newBackgroundContext()
         context.perform {
             var item = History.getExisting(url, context: context)
             if item == nil {
@@ -70,13 +70,13 @@ public final class History: NSManagedObject, WebsitePresentable, CRUD {
             // BRAVE TODO:
 //            item?.sectionIdentifier = BraveStrings.Today
 
-            DataController.save(context)
+            DataController.save(context: context)
         }
     }
 
     public class func frc() -> NSFetchedResultsController<NSFetchRequestResult> {
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>()
-        let context = DataController.mainContext
+        let context = DataController.viewContext
         
         fetchRequest.entity = History.entity(context)
         fetchRequest.fetchBatchSize = 20
@@ -123,7 +123,7 @@ public final class History: NSManagedObject, WebsitePresentable, CRUD {
     }
     
     public class func deleteAll(_ completionOnMain: @escaping ()->()) {
-        let context = DataController.backgroundContext
+        let context = DataController.newBackgroundContext()
         context.perform {
             let fetchRequest = NSFetchRequest<NSFetchRequestResult>()
             fetchRequest.entity = History.entity(context)

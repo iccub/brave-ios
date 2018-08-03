@@ -39,18 +39,11 @@ public class DataController: NSObject {
         return container
     }()
     
-    private var mainThreadContext: NSManagedObjectContext {
+    private var _viewContext: NSManagedObjectContext {
         return container.viewContext
     }
     
-    /// Creates a new background context each time this getter is called.
-    private var backgroundThreadContext: NSManagedObjectContext {
-        let backgroundContext = container.newBackgroundContext()
-        backgroundContext.mergePolicy = NSMergePolicy.mergeByPropertyStoreTrump
-        return backgroundContext
-    }
-    
-    public static func save(_ context: NSManagedObjectContext?) {
+    public static func save(context: NSManagedObjectContext?) {
         guard let context = context else {
             log.warning("No context on save")
             return
@@ -65,25 +58,29 @@ public class DataController: NSObject {
         }
     }
     
-    public static var mainContext: NSManagedObjectContext {
-        guard let shared = DataController.shared else {
-            fatalError("Data controller is nil")
-        }
-        return shared.mainThreadContext
-    }
-    
-    public static var backgroundContext: NSManagedObjectContext {
-        guard let shared = DataController.shared else {
-            fatalError("Data controller is nil")
-        }
-        return shared.backgroundThreadContext
-    }
-    
     public static func resetDatabase() {
         // Only available in testing enviroment
         if !AppConstants.IsRunningTest { return }
         
         DataController.shared = nil
         DataController.shared = DataController()
+    }
+    
+    public static var viewContext: NSManagedObjectContext {
+        guard let shared = DataController.shared else {
+            fatalError("Data controller is nil")
+        }
+        
+        return shared._viewContext
+    }
+    
+    public static func newBackgroundContext() -> NSManagedObjectContext {
+        guard let shared = DataController.shared else {
+            fatalError("Data controller is nil")
+        }
+        
+        let backgroundContext = shared.container.newBackgroundContext()
+        backgroundContext.mergePolicy = NSMergePolicy.mergeByPropertyStoreTrump
+        return backgroundContext
     }
 }

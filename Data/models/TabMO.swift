@@ -71,19 +71,19 @@ public final class TabMO: NSManagedObject, CRUD {
     
     /// Creates new tab. If you want to add urls to existing tabs use `update()` method. 
     public class func create() -> TabMO {
-        let context = DataController.backgroundContext
+        let context = DataController.newBackgroundContext()
         let tab = TabMO(entity: TabMO.entity(context), insertInto: context)
         // TODO: replace with logic to create sync uuid then buble up new uuid to browser.
         tab.syncUUID = UUID().uuidString
         tab.title = Strings.New_Tab
-        DataController.save(context)
+        DataController.save(context: context)
         return tab
     }
 
     // Updates existing tab with new data. Usually called when user navigates to a new website for in his existing tab.
-    @discardableResult public class func update(with id: String, tabData: SavedTab) -> TabMO? {
-        let context = DataController.backgroundContext
-        guard let tab = get(fromId: id, context: context) else { return nil }
+    @discardableResult public class func update(tabData: SavedTab) -> TabMO? {
+        let context = DataController.newBackgroundContext()
+        guard let tab = get(fromId: tabData.id, context: context) else { return nil }
         
         if let screenshot = tabData.screenshot {
             tab.screenshot = UIImageJPEGRepresentation(screenshot, 1)
@@ -95,16 +95,16 @@ public final class TabMO: NSManagedObject, CRUD {
         tab.urlHistoryCurrentIndex = tabData.historyIndex
         tab.isSelected = tabData.isSelected
         
-        DataController.save(context)
+        DataController.save(context: context)
         
         return tab
     }
     
     public class func saveScreenshotUUID(_ uuid: UUID?, tabId: String?) {
-        let context = DataController.backgroundContext
+        let context = DataController.newBackgroundContext()
         let tabMO = TabMO.get(fromId: tabId, context: context)
         tabMO?.screenshotUUID = uuid
-        DataController.save(context)
+        DataController.save(context: context)
     }
 
     public class func getAll() -> [TabMO] {
