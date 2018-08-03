@@ -15,33 +15,33 @@ class DataControllerTests: CoreDataTestCase {
     }
     
     func testStoreIsEmpty() {
-        // Checking main and background contexts with TopSite entity
-        let mainContext = DataController.viewContext
-        XCTAssertEqual(try! mainContext.count(for: fetchRequest), 0)
+        // Checking view and background contexts with TopSite entity
+        let viewContext = DataController.viewContext
+        XCTAssertEqual(try! viewContext.count(for: fetchRequest), 0)
         
         let backgroundContext = DataController.newBackgroundContext()
         XCTAssertEqual(try! backgroundContext.count(for: fetchRequest), 0)
         
         // Checking rest of entities
         let bookmarkFR = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: Bookmark.self))
-        XCTAssertEqual(try! mainContext.count(for: bookmarkFR), 0)
+        XCTAssertEqual(try! viewContext.count(for: bookmarkFR), 0)
         
         let tabFR = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: TabMO.self))
-        XCTAssertEqual(try! mainContext.count(for: tabFR), 0)
+        XCTAssertEqual(try! viewContext.count(for: tabFR), 0)
         
         // FaviconMO class name is different from its model(probably due to firefox having favicon class already)
         // Need to use hardcoded string here.
         let faviconFR = NSFetchRequest<NSFetchRequestResult>(entityName: "Favicon")
-        XCTAssertEqual(try! mainContext.count(for: faviconFR), 0)
+        XCTAssertEqual(try! viewContext.count(for: faviconFR), 0)
         
         let domainFR = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: Domain.self))
-        XCTAssertEqual(try! mainContext.count(for: domainFR), 0)
+        XCTAssertEqual(try! viewContext.count(for: domainFR), 0)
         
         let deviceFR = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: Device.self))
-        XCTAssertEqual(try! mainContext.count(for: deviceFR), 0)
+        XCTAssertEqual(try! viewContext.count(for: deviceFR), 0)
         
         let historyFR = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: History.self))
-        XCTAssertEqual(try! mainContext.count(for: historyFR), 0)
+        XCTAssertEqual(try! viewContext.count(for: historyFR), 0)
     }
     
     func testSavingMainContext() {
@@ -67,7 +67,7 @@ class DataControllerTests: CoreDataTestCase {
         
         XCTAssertEqual(result.count, 1)
         
-        // Check if object got updated on main context(merge from parent check)
+        // Check if object got updated on view context(merge from parent check)
         XCTAssertEqual(try! DataController.viewContext.fetch(fetchRequest).count, 1)
     }
     
@@ -88,4 +88,16 @@ class DataControllerTests: CoreDataTestCase {
         
         XCTAssertEqual(result.count, 0)
     }
+    
+    func testNilContext() {
+        DataController.save(context: nil)
+        XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), 0)
+    }
+    
+    func testNoChangesContext() {
+        let context = DataController.newBackgroundContext()
+        DataController.save(context: context)
+        XCTAssertEqual(try! context.count(for: fetchRequest), 0)
+    }
+
 }
