@@ -64,7 +64,7 @@ class BookmarkEditingViewController: FormViewController {
       block(self)
     }
     
-    self.bookmark.update(customTitle: self.titleRow?.value, url: self.urlRow?.value?.absoluteString, save: true)
+    self.bookmark.update(newCustomTitle: self.titleRow?.value, url: self.urlRow?.value?.absoluteString, save: true)
   }
   
   var isEditingFolder: Bool {
