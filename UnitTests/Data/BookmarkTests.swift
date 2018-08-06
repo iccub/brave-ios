@@ -155,7 +155,7 @@ class BookmarkTests: CoreDataTestCase {
     
     
     func testGetChildren() {
-        Bookmark.create(url: URL(string: ""), title: nil, customTitle: "Folder", isFolder: true)
+        Bookmark.create(url: nil, title: nil, customTitle: "Folder", isFolder: true)
         let folder = try! DataController.viewContext.fetch(fetchRequest).first!
         
         let nonNestedBookmarksToAdd = 3
@@ -168,8 +168,20 @@ class BookmarkTests: CoreDataTestCase {
         XCTAssertEqual(Bookmark.getChildren(forFolderUUID: folder.syncUUID)?.count, nestedBookmarksCount)
     }
     
-    func testGetFolders() {
+    func testGetTopLevelFolders() {
+        Bookmark.create(url: nil, title: nil, customTitle: "Folder1", isFolder: true)
+        let folder = try! DataController.viewContext.fetch(fetchRequest).first!
         
+        insertBookmarks(amount: 3)
+        Bookmark.create(url: nil, title: nil, customTitle: "Folder2", isFolder: true)
+        
+        // Adding some bookmarks and one folder to our nested folder, to check that only top level folders are fetched.
+        insertBookmarks(amount: 3, parent: folder)
+        Bookmark.create(url: nil, title: nil, customTitle: "Folder3", parentFolder: folder, isFolder: true)
+        
+        // 3 folders in total, 2 in root directory
+        XCTAssertEqual(Bookmark.count(predicate: NSPredicate(format: "isFolder = YES")), 3)
+        XCTAssertEqual(Bookmark.getTopLevelFolders().count, 2)
     }
     
     func getGetAllBookmarks() {

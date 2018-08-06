@@ -212,13 +212,8 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, CRUD {
         return first(where: predicate, context: context)
     }
     
-    public static func getFolders(bookmark: Bookmark?, context: NSManagedObjectContext) -> [Bookmark] {
-        var predicate: NSPredicate?
-        if let parent = bookmark?.parentFolder {
-            predicate = NSPredicate(format: "isFolder == true and parentFolder == %@", parent)
-        } else {
-            predicate = NSPredicate(format: "isFolder == true and parentFolder.@count = 0")
-        }
+    public static func getTopLevelFolders() -> [Bookmark] {
+        let predicate = NSPredicate(format: "isFolder == true and parentFolder == nil")
         
         return all(where: predicate) ?? []
     }

@@ -49,8 +49,7 @@ class BookmarkEditingViewController: FormViewController {
     self.bookmarksPanel = bookmarksPanel
     self.bookmarkIndexPath = indexPath
     
-    // get top-level folders
-    folders = Bookmark.getFolders(bookmark: nil, context: DataController.viewContext)
+    folders = Bookmark.getTopLevelFolders()
   }
   
   required init?(coder aDecoder: NSCoder) {
