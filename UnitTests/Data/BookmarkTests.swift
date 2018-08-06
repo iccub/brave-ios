@@ -184,8 +184,12 @@ class BookmarkTests: CoreDataTestCase {
         XCTAssertEqual(Bookmark.getTopLevelFolders().count, 2)
     }
     
-    func getGetAllBookmarks() {
-        
+    func testGetAllBookmarks() {
+        let bookmarksCount = 3
+        insertBookmarks(amount: bookmarksCount)
+        // Adding a favorite(non-bookmark type of bookmark)
+        Bookmark.create(url: URL(string: "http://brave.com"), title: "Brave", isFavorite: true)
+        XCTAssertEqual(Bookmark.getAllBookmarks().count, bookmarksCount)
     }
     
     private func insertBookmarks(amount: Int, parent: Bookmark? = nil) {

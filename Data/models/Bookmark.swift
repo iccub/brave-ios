@@ -203,6 +203,18 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, CRUD {
         return all(where: predicate)
     }
     
+    public static func getTopLevelFolders() -> [Bookmark] {
+        let predicate = NSPredicate(format: "isFolder == true and parentFolder == nil")
+        
+        return all(where: predicate) ?? []
+    }
+    
+    static func getAllBookmarks(context: NSManagedObjectContext = DataController.viewContext) -> [Bookmark] {
+        let predicate = NSPredicate(format: "isFavorite == NO")
+        
+        return all(where: predicate, context: context) ?? []
+    }
+    
     private static func get(parentSyncUUID parentUUID: [Int]?, context: NSManagedObjectContext?) -> Bookmark? {
         guard let searchableUUID = SyncHelpers.syncDisplay(fromUUID: parentUUID), let context = context else {
             return nil
@@ -210,18 +222,6 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, CRUD {
         
         let predicate = NSPredicate(format: "syncDisplayUUID == %@", searchableUUID)
         return first(where: predicate, context: context)
-    }
-    
-    public static func getTopLevelFolders() -> [Bookmark] {
-        let predicate = NSPredicate(format: "isFolder == true and parentFolder == nil")
-        
-        return all(where: predicate) ?? []
-    }
-    
-    static func getAllBookmarks(context: NSManagedObjectContext) -> [Bookmark] {
-        let predicate = NSPredicate(format: "isFavorite == NO")
-        
-        return all(where: predicate) ?? []
     }
     
     // MARK: - Update
