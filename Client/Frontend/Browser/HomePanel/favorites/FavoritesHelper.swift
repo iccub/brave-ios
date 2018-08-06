@@ -13,9 +13,10 @@ struct FavoritesHelper {
     // Indicates if favorites have been initialized.
     static let initPrefsKey = "FavoritesHelperInitPrefsKey"
 
-    static func frc() -> NSFetchedResultsController<NSFetchRequestResult> {
+    // TODO: Move to bookmark moddel.
+    static func frc() -> NSFetchedResultsController<Bookmark> {
         let context = DataController.viewContext
-        let fetchRequest = NSFetchRequest<NSFetchRequestResult>()
+        let fetchRequest = NSFetchRequest<Bookmark>()
 
         fetchRequest.entity = Bookmark.entity(context: context)
         fetchRequest.fetchBatchSize = 20
@@ -34,20 +35,20 @@ struct FavoritesHelper {
     // MARK: - Favorites initialization
     static func addDefaultFavorites() {
         PreloadedFavorites.getList().forEach { fav in
-            Bookmark.add(url: fav.url, title: fav.title, isFavorite: true)
+            Bookmark.create(url: fav.url, title: fav.title, isFavorite: true)
         }
     }
 
     static func convertToBookmarks(_ sites: [Site]) {
         sites.forEach { site in
             if let url = try? site.url.asURL() {
-                Bookmark.add(url: url, title: url.normalizedHost ?? site.url, isFavorite: true)
+                Bookmark.create(url: url, title: url.normalizedHost ?? site.url, isFavorite: true)
             }
         }
     }
 
     static func add(url: URL, title: String?, color: UIColor?) {
-        Bookmark.add(url: url, title: title, isFavorite: true, color: color)
+        Bookmark.create(url: url, title: title, isFavorite: true, color: color)
     }
 
     static func isAlreadyAdded(_ url: URL) -> Bool{

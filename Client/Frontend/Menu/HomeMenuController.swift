@@ -170,7 +170,7 @@ class HomeMenuController: UIViewController, PopoverContentComponent {
     if Bookmark.contains(url: url) {
       Bookmark.remove(forUrl: url)
     } else {
-      Bookmark.add(url: url, title: tabState.title, parentFolder: bookmarksController.currentBookmarksPanel().currentFolder)
+      Bookmark.create(url: url, title: tabState.title, parentFolder: bookmarksController.currentBookmarksPanel().currentFolder)
     }
   }
   

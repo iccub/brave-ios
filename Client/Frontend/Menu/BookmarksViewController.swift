@@ -108,7 +108,7 @@ class BookmarksViewController: SiteTableViewController, HomePanel {
   
   weak var homePanelDelegate: HomePanelDelegate?
   
-  var bookmarksFRC: NSFetchedResultsController<NSFetchRequestResult>?
+  var bookmarksFRC: NSFetchedResultsController<Bookmark>?
   
   var editBookmarksToolbar: UIToolbar!
   var editBookmarksButton: UIBarButtonItem!
@@ -264,7 +264,7 @@ class BookmarksViewController: SiteTableViewController, HomePanel {
   }
   
   func addFolder(titled title: String) {
-    Bookmark.add(url: nil, title: nil, customTitle: title, parentFolder: currentFolder, isFolder: true)
+    Bookmark.create(url: nil, title: nil, customTitle: title, parentFolder: currentFolder, isFolder: true)
     tableView.setContentOffset(CGPoint.zero, animated: true)
   }
   

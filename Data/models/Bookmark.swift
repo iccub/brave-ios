@@ -23,6 +23,7 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, CRUD {
     @NSManaged public var lastVisited: Date?
     @NSManaged public var created: Date?
     @NSManaged public var order: Int16
+    /// TODO: Remove, never used.
     @NSManaged public var tags: [String]?
     @NSManaged public var color: String?
     
@@ -45,7 +46,7 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, CRUD {
             syncParentDisplayUUID = SyncHelpers.syncDisplay(fromUUID: value)
 
             // Attach parent, only works if parent exists.
-            let parent = Bookmark.get(parentSyncUUID: value, context: self.managedObjectContext)
+            let parent = Bookmark.get(parentSyncUUID: value, context: managedObjectContext)
             parentFolder = parent
         }
     }
@@ -68,14 +69,10 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, CRUD {
         created = Date()
         lastVisited = created
     }
-    
-    public func asDictionary(deviceId: [Int]?, action: Int?) -> [String: Any] {
-        return SyncBookmark(record: self, deviceId: deviceId, action: action).dictionaryRepresentation()
-    }
 
-    public class func frc(parentFolder: Bookmark?) -> NSFetchedResultsController<NSFetchRequestResult> {
+    public class func frc(parentFolder: Bookmark?) -> NSFetchedResultsController<Bookmark> {
         let context = DataController.viewContext
-        let fetchRequest = NSFetchRequest<NSFetchRequestResult>()
+        let fetchRequest = NSFetchRequest<Bookmark>()
         
         fetchRequest.entity = Bookmark.entity(context: context)
         fetchRequest.fetchBatchSize = 20
@@ -97,7 +94,7 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, CRUD {
     
     // MARK: - Create
     
-    public class func add(url: URL?, title: String?, customTitle: String? = nil, parentFolder: Bookmark? = nil, 
+    public class func create(url: URL?, title: String?, customTitle: String? = nil, parentFolder: Bookmark? = nil, 
                           isFolder: Bool = false, isFavorite: Bool = false, color: UIColor? = nil) {
         
         let site = SyncSite()
@@ -144,8 +141,6 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, CRUD {
         bk.isFavorite = bookmark?.isFavorite ?? bk.isFavorite
         bk.isFolder = bookmark?.isFolder ?? bk.isFolder
         bk.syncUUID = root?.objectId ?? bk.syncUUID ?? SyncCrypto.uniqueSerialBytes(count: 16)
-        bk.created = site?.creationNativeDate ?? Date()
-        bk.lastVisited = site?.lastAccessedNativeDate ?? Date()
         
         if let location = site?.location, let url = URL(string: location) {
             bk.domain = Domain.getOrCreateForUrl(url, context: context)
@@ -265,10 +260,11 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, CRUD {
         }
     }
 
-    public class func reorderBookmarks(frc: NSFetchedResultsController<NSFetchRequestResult>?, sourceIndexPath: IndexPath,
+    public class func reorderBookmarks(frc: NSFetchedResultsController<Bookmark>?, sourceIndexPath: IndexPath,
                                 destinationIndexPath: IndexPath) {
-        let dest = frc?.object(at: destinationIndexPath) as! Bookmark
-        let src = frc?.object(at: sourceIndexPath) as! Bookmark
+        guard let dest = frc?.object(at: destinationIndexPath), let src = frc?.object(at: sourceIndexPath) else {
+            return
+        }
         
         if dest === src {
             return
@@ -277,7 +273,7 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, CRUD {
         // Warning, this could be a bottleneck, grabs ALL the bookmarks in the current folder
         // But realistically, with a batch size of 20, and most reads around 1ms, a bottleneck here is an edge case.
         // Optionally: grab the parent folder, and the on a bg thread iterate the bms and update their order. Seems like overkill.
-        var bms = frc?.fetchedObjects as! [Bookmark]
+        guard var bms = frc?.fetchedObjects else { return }
         bms.remove(at: bms.index(of: src)!)
         if sourceIndexPath.row > destinationIndexPath.row {
             // insert before
@@ -327,5 +323,9 @@ extension Bookmark: Syncable {
         lastVisited = Date(timeIntervalSince1970:(Double(site.lastAccessedTime ?? 0) / 1000.0))
         syncParentUUID = bookmark.parentFolderObjectId
         // No auto-save, must be handled by caller if desired
+    }
+    
+    public func asDictionary(deviceId: [Int]?, action: Int?) -> [String: Any] {
+        return SyncBookmark(record: self, deviceId: deviceId, action: action).dictionaryRepresentation()
     }
 }
