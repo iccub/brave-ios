@@ -16,7 +16,6 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, CRUD {
     @NSManaged public var isFavorite: Bool
     @NSManaged public var isFolder: Bool
     @NSManaged public var title: String?
-    /// Used for folder titles.
     @NSManaged public var customTitle: String?
     @NSManaged public var url: String?
     @NSManaged public var visits: Int32
@@ -226,7 +225,7 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, CRUD {
     
     // MARK: - Update
     
-    public func update(newCustomTitle: String?, url: String?, save: Bool = false) {
+    public func update(newCustomTitle: String?, url: String?, save: Bool = true) {
         
         // See if there has been any change
         if customTitle == newCustomTitle && self.url == url {
@@ -314,7 +313,7 @@ extension Bookmark: Syncable {
     public func update(syncRecord record: SyncRecord?) {
         guard let bookmark = record as? SyncBookmark, let site = bookmark.site else { return }
         title = site.title
-        update(newCustomTitle: site.customTitle, url: site.location)
+        update(newCustomTitle: site.customTitle, url: site.location, save: false)
         lastVisited = Date(timeIntervalSince1970:(Double(site.lastAccessedTime ?? 0) / 1000.0))
         syncParentUUID = bookmark.parentFolderObjectId
         // No auto-save, must be handled by caller if desired

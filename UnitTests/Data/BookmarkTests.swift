@@ -14,7 +14,7 @@ class BookmarkTests: CoreDataTestCase {
     }
     
     func testSimpleCreate() {
-        let url = "htt:/bravecom"
+        let url = "http://brave.com"
         let title = "Brave"
         Bookmark.create(url: URL(string: url), title: title)
         
@@ -190,6 +190,81 @@ class BookmarkTests: CoreDataTestCase {
         // Adding a favorite(non-bookmark type of bookmark)
         Bookmark.create(url: URL(string: "http://brave.com"), title: "Brave", isFavorite: true)
         XCTAssertEqual(Bookmark.getAllBookmarks().count, bookmarksCount)
+    }
+    
+    func testUpdateBookmark() {
+        let url = "http://brave.com"
+        let customTitle = "Brave"
+        let newUrl = "http://updated.example.com"
+        let newCustomTitle = "Example"
+        
+        Bookmark.create(url: URL(string: url), title: "title", customTitle: customTitle)
+        let object = try! DataController.viewContext.fetch(fetchRequest).first!
+        XCTAssertEqual(Bookmark.all()?.count, 1)
+        
+        XCTAssertEqual(object.displayTitle, customTitle)
+        XCTAssertEqual(object.url, url)
+        
+        object.update(newCustomTitle: newCustomTitle, url: newUrl)
+        // Let's make sure not any new record was added to DB
+        XCTAssertEqual(Bookmark.all()?.count, 1)
+        
+        XCTAssertNotEqual(object.displayTitle, customTitle)
+        XCTAssertNotEqual(object.url, url)
+        
+        XCTAssertEqual(object.displayTitle, newCustomTitle)
+        XCTAssertEqual(object.url, newUrl)
+    }
+    
+    func testUpdateBookmarkNoChanges() {
+        let customTitle = "Brave"
+        let url = "http://brave.com"
+        
+        Bookmark.create(url: URL(string: url), title: "title", customTitle: customTitle)
+        let object = try! DataController.viewContext.fetch(fetchRequest).first!
+        XCTAssertEqual(Bookmark.all()?.count, 1)
+        
+        
+        object.update(newCustomTitle: customTitle, url: object.url)
+        // Let's make sure not any new record was added to DB
+        XCTAssertEqual(Bookmark.all()?.count, 1)
+        
+        XCTAssertEqual(object.customTitle, customTitle)
+        XCTAssertEqual(object.url, url)
+    }
+    
+    func testUpdateBookmarkBadUrl() {
+        let customTitle = "Brave"
+        let url = "http://brave.com"
+        let badUrl = "   " // Empty spaces cause URL(string:) to return nil
+        
+        Bookmark.create(url: URL(string: url), title: "title", customTitle: customTitle)
+        let object = try! DataController.viewContext.fetch(fetchRequest).first!
+        XCTAssertEqual(Bookmark.all()?.count, 1)
+        
+        XCTAssertNotNil(object.domain)
+        
+        object.update(newCustomTitle: customTitle, url: badUrl)
+        // Let's make sure not any new record was added to DB
+        XCTAssertEqual(Bookmark.all()?.count, 1)
+        XCTAssertNil(object.domain)
+    }
+    
+    func testUpdateFolder() {
+        let customTitle = "Folder"
+        let newCustomTitle = "FolderUpdated"
+        
+        Bookmark.create(url: nil, title: nil, customTitle: customTitle, isFolder: true)
+        let object = try! DataController.viewContext.fetch(fetchRequest).first!
+        XCTAssertEqual(Bookmark.all()?.count, 1)
+        
+        XCTAssertEqual(object.displayTitle, customTitle)
+        
+        object.update(newCustomTitle: newCustomTitle, url: nil)
+        // Let's make sure not any new record was added to DB
+        XCTAssertEqual(Bookmark.all()?.count, 1)
+        
+        XCTAssertEqual(object.displayTitle, newCustomTitle)
     }
     
     private func insertBookmarks(amount: Int, parent: Bookmark? = nil) {
