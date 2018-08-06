@@ -144,6 +144,38 @@ class BookmarkTests: CoreDataTestCase {
         XCTAssertEqual(objects?.count, Bookmark.all()!.count - bookmarksNotInsideOfFolder)
     }
     
+    func testContains() {
+        let url = URL(string: "http://brave.com")!
+        let wrongUrl = URL(string: "http://wrong.brave.com")!
+        Bookmark.create(url: url, title: nil)
+        
+        XCTAssert(Bookmark.contains(url: url))
+        XCTAssertFalse(Bookmark.contains(url: wrongUrl))
+    }
+    
+    
+    func testGetChildren() {
+        Bookmark.create(url: URL(string: ""), title: nil, customTitle: "Folder", isFolder: true)
+        let folder = try! DataController.viewContext.fetch(fetchRequest).first!
+        
+        let nonNestedBookmarksToAdd = 3
+        insertBookmarks(amount: nonNestedBookmarksToAdd)
+        
+        // Few bookmarks inside our folder.
+        let nestedBookmarksCount = 5
+        insertBookmarks(amount: nestedBookmarksCount, parent: folder)
+        
+        XCTAssertEqual(Bookmark.getChildren(forFolderUUID: folder.syncUUID)?.count, nestedBookmarksCount)
+    }
+    
+    func testGetFolders() {
+        
+    }
+    
+    func getGetAllBookmarks() {
+        
+    }
+    
     private func insertBookmarks(amount: Int, parent: Bookmark? = nil) {
         let bookmarksBeforeInsert = try! DataController.viewContext.count(for: fetchRequest)
         

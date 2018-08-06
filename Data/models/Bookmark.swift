@@ -198,12 +198,12 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, CRUD {
         let isFolderKeyPath = #keyPath(Bookmark.isFolder)
         
         let predicate = NSPredicate(format: "\(syncParentDisplayUUIDKeyPath) == %@ AND \(isFolderKeyPath) == %@",  
-            searchableUUID, ignoreFolders ? "YES" : "NO")
+            searchableUUID, NSNumber(value: ignoreFolders))
         
         return all(where: predicate)
     }
     
-    static func get(parentSyncUUID parentUUID: [Int]?, context: NSManagedObjectContext?) -> Bookmark? {
+    private static func get(parentSyncUUID parentUUID: [Int]?, context: NSManagedObjectContext?) -> Bookmark? {
         guard let searchableUUID = SyncHelpers.syncDisplay(fromUUID: parentUUID), let context = context else {
             return nil
         }
