@@ -13,43 +13,7 @@ class BookmarkTests: CoreDataTestCase {
         return NSEntityDescription.entity(forEntityName: String(describing: Bookmark.self), in: context)!
     }
     
-    func testSimpleCreate() {
-        let url = "http://brave.com"
-        let title = "Brave"
-        Bookmark.create(url: URL(string: url), title: title)
-        
-        XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), 1)
-        let result = try! DataController.viewContext.fetch(fetchRequest).first
-        
-        XCTAssertEqual(result?.url, url)
-        XCTAssertEqual(result?.title, title)
-        assertDefaultValues(for: result!)
-    }
-    
-    func testCreateNilUrlAndTitle() {
-        Bookmark.create(url: nil, title: nil)
-        XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), 1)
-        let result = try! DataController.viewContext.fetch(fetchRequest).first
-        
-        XCTAssertNil(result?.url)
-        XCTAssertNil(result?.title)
-        assertDefaultValues(for: result!)
-    }
-    
-    func testCreateFolder() {
-        let url = "http://brave.com"
-        let title = "Brave"
-        let folderName = "FolderName"
-        
-        Bookmark.create(url: URL(string: url), title: title, customTitle: folderName, isFolder: true)
-        XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), 1)
-        let result = try! DataController.viewContext.fetch(fetchRequest).first
-        
-        XCTAssertEqual(result?.title, title)
-        XCTAssertEqual(result?.customTitle, folderName)
-        XCTAssert(result!.isFolder)
-        XCTAssertEqual(result?.displayTitle, folderName)
-    }
+    // MARK: - Getters/properties
     
     func testDisplayTitle() {
         let title = "Brave"
@@ -144,6 +108,48 @@ class BookmarkTests: CoreDataTestCase {
         XCTAssertEqual(objects?.count, Bookmark.all()!.count - bookmarksNotInsideOfFolder)
     }
     
+    // MARK: - Create
+    
+    func testSimpleCreate() {
+        let url = "http://brave.com"
+        let title = "Brave"
+        Bookmark.create(url: URL(string: url), title: title)
+        
+        XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), 1)
+        let result = try! DataController.viewContext.fetch(fetchRequest).first
+        
+        XCTAssertEqual(result?.url, url)
+        XCTAssertEqual(result?.title, title)
+        assertDefaultValues(for: result!)
+    }
+    
+    func testCreateNilUrlAndTitle() {
+        Bookmark.create(url: nil, title: nil)
+        XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), 1)
+        let result = try! DataController.viewContext.fetch(fetchRequest).first
+        
+        XCTAssertNil(result?.url)
+        XCTAssertNil(result?.title)
+        assertDefaultValues(for: result!)
+    }
+    
+    func testCreateFolder() {
+        let url = "http://brave.com"
+        let title = "Brave"
+        let folderName = "FolderName"
+        
+        Bookmark.create(url: URL(string: url), title: title, customTitle: folderName, isFolder: true)
+        XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), 1)
+        let result = try! DataController.viewContext.fetch(fetchRequest).first
+        
+        XCTAssertEqual(result?.title, title)
+        XCTAssertEqual(result?.customTitle, folderName)
+        XCTAssert(result!.isFolder)
+        XCTAssertEqual(result?.displayTitle, folderName)
+    }
+    
+    // MARK: - Read
+    
     func testContains() {
         let url = URL(string: "http://brave.com")!
         let wrongUrl = URL(string: "http://wrong.brave.com")!
@@ -152,7 +158,6 @@ class BookmarkTests: CoreDataTestCase {
         XCTAssert(Bookmark.contains(url: url))
         XCTAssertFalse(Bookmark.contains(url: wrongUrl))
     }
-    
     
     func testGetChildren() {
         Bookmark.create(url: nil, title: nil, customTitle: "Folder", isFolder: true)
@@ -191,6 +196,8 @@ class BookmarkTests: CoreDataTestCase {
         Bookmark.create(url: URL(string: "http://brave.com"), title: "Brave", isFavorite: true)
         XCTAssertEqual(Bookmark.getAllBookmarks().count, bookmarksCount)
     }
+    
+    // MARK: - Update
     
     func testUpdateBookmark() {
         let url = "http://brave.com"
@@ -267,6 +274,157 @@ class BookmarkTests: CoreDataTestCase {
         XCTAssertEqual(object.displayTitle, newCustomTitle)
     }
     
+    func testBookmarkReorderDragDown() {
+        let result = reorder(sourcePosition: 0, destinationposition: 5)
+        let sourceObject = result.src
+        let destinationObject = result.dest
+        
+        XCTAssertEqual(sourceObject.order, 5)
+        XCTAssertEqual(destinationObject.order, 4)
+    }
+    
+    func testBookmarkReorderDragUp() {
+        let result = reorder(sourcePosition: 5, destinationposition: 1)
+        let sourceObject = result.src
+        let destinationObject = result.dest
+        
+        XCTAssertEqual(sourceObject.order, 1)
+        XCTAssertEqual(destinationObject.order, 2)
+    }
+    
+    func testBookmarkReorderTopToBottom() {
+        let result = reorder(sourcePosition: 9, destinationposition: 0, skipOrderChangeTests: true)
+        let sourceObject = result.src
+        let destinationObject = result.dest
+        
+        XCTAssertEqual(sourceObject.order, 0)
+        XCTAssertEqual(destinationObject.order, 1)
+    }
+    
+    func testBookmarkReorderBottomToTop() {
+        let result = reorder(sourcePosition: 0, destinationposition: 9)
+        let sourceObject = result.src
+        let destinationObject = result.dest
+        
+        XCTAssertEqual(sourceObject.order, 9)
+        XCTAssertEqual(destinationObject.order, 8)
+    }
+    
+    func testBookmarksReorderSameIndexPaths() {
+        insertBookmarks(amount: 10)
+        
+        let frc = Bookmark.frc(parentFolder: nil)
+        try! frc.performFetch()
+        
+        let sourceIndexPath = IndexPath(row: 5, section: 0)
+        let destinationIndexPath = IndexPath(row: 5, section: 0)
+        
+        let sourceOrderBefore = frc.object(at: sourceIndexPath).order
+        let destinationOrderBefore = frc.object(at: destinationIndexPath).order
+        
+        Bookmark.reorderBookmarks(frc: frc, sourceIndexPath: sourceIndexPath, destinationIndexPath: destinationIndexPath)
+        
+        // Test order haven't changed
+        XCTAssertEqual(frc.object(at: sourceIndexPath).order, sourceOrderBefore)
+        XCTAssertEqual(frc.object(at: destinationIndexPath).order, destinationOrderBefore)
+    }
+    
+    func testBookmarksReorderNilFrc() {
+        let sourceIndexPath = IndexPath(row: 0, section: 0)
+        let destinationIndexPath = IndexPath(row: 5, section: 0)
+        
+        Bookmark.reorderBookmarks(frc: nil, sourceIndexPath: sourceIndexPath, destinationIndexPath: destinationIndexPath)
+        // Assert nothing.
+    }
+    
+    // MARK: - Delete
+    
+    func testRemoveByUrl() {
+        let url = URL(string: "http://brave.com")!
+        let wrongUrl = URL(string: "http://wrong.brave.com")!
+        
+        Bookmark.create(url: url, title: "Brave")
+        XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), 1)
+        
+        Bookmark.remove(forUrl: wrongUrl)
+        XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), 1)
+        
+        Bookmark.remove(forUrl: url)
+        XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), 0)
+    }
+    
+    // MARK: - Syncable
+    
+    func testAddSyncable() {
+        let url = URL(string: "http://brave.com")!
+        let title = "Brave"
+        
+        let site = SyncSite()
+        site.title = title
+        site.location = url.absoluteString
+        
+        let bookmark = SyncBookmark()
+        bookmark.site = site
+        
+        let result = Bookmark.add(rootObject: bookmark, save: true, sendToSync: true, 
+                                  context: DataController.newBackgroundContext())
+        XCTAssertNil(result)
+        
+        XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), 1)
+    }
+    
+    func testUpdateSyncable() {
+        let url = URL(string: "http://brave.com")!
+        let title = "Brave"
+        
+        let newUrl = "http://example.com"
+        let newTitle = "BraveUpdated"
+        
+        let site = SyncSite()
+        site.title = newTitle
+        site.location = newUrl
+        
+        let syncBookmark = SyncBookmark()
+        syncBookmark.site = site
+        
+        Bookmark.create(url: url, title: title)
+        let object = try! DataController.viewContext.fetch(fetchRequest).first
+        
+        let oldCreated = object?.created
+        let oldLastVisited = object?.lastVisited
+        
+        XCTAssertNotEqual(object?.title, newTitle)
+        XCTAssertNotEqual(object?.url, newUrl)
+        
+        object?.update(syncRecord: syncBookmark)
+        
+        XCTAssertEqual(object?.title, newTitle)
+        XCTAssertEqual(object?.url, newUrl)
+        
+        XCTAssertEqual(object?.created, oldCreated)
+        XCTAssertNotEqual(object?.lastVisited, oldLastVisited)
+    }
+    
+    func testAsDictionary() {
+        let url = URL(string: "http://brave.com")!
+        let title = "Brave"
+        
+        let deviceId = Device.currentDevice()?.deviceId
+        
+        Bookmark.create(url: url, title: title)
+        let object = try! DataController.viewContext.fetch(fetchRequest).first!
+        
+        let dict = object.asDictionary(deviceId: deviceId, action: 0)
+        
+        // Just checking if keys exist. More robust tests should be placed in SyncableTests.
+        XCTAssertNotNil(dict["objectId"])
+        XCTAssertNotNil(dict["bookmark"])
+        XCTAssertNotNil(dict["action"])
+        XCTAssertNotNil(dict["objectData"])
+    }
+    
+    // MARK: - Helpers
+    
     private func insertBookmarks(amount: Int, parent: Bookmark? = nil) {
         let bookmarksBeforeInsert = try! DataController.viewContext.count(for: fetchRequest)
         
@@ -278,6 +436,35 @@ class BookmarkTests: CoreDataTestCase {
         
         let difference = bookmarksBeforeInsert + amount
         XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), difference)
+    }
+    
+    private func reorder(sourcePosition: Int, destinationposition: Int, 
+                         skipOrderChangeTests: Bool = false) -> (src: Bookmark, dest: Bookmark) {
+        insertBookmarks(amount: 10)
+        
+        let frc = Bookmark.frc(parentFolder: nil)
+        try! frc.performFetch()
+        
+        let sourceIndexPath = IndexPath(row: sourcePosition, section: 0)
+        let destinationIndexPath = IndexPath(row: destinationposition, section: 0)
+        
+        let sourceObject = frc.object(at: sourceIndexPath)
+        let destinationObject = frc.object(at: destinationIndexPath)
+        
+        let sourceOrderBefore = frc.object(at: sourceIndexPath).order
+        let destinationOrderBefore = frc.object(at: destinationIndexPath).order
+        
+        // CD objects we saved before will get updated after this call.
+        Bookmark.reorderBookmarks(frc: frc, sourceIndexPath: sourceIndexPath, destinationIndexPath: destinationIndexPath)
+        
+        
+        // Test order has changed, won't work when swapping bookmarks with order = 0
+        if !skipOrderChangeTests {
+            XCTAssertNotEqual(sourceObject.order, sourceOrderBefore)
+            XCTAssertNotEqual(destinationObject.order, destinationOrderBefore)
+        }
+        
+        return (sourceObject, destinationObject)
     }
     
     private func assertDefaultValues(for record: Bookmark) {

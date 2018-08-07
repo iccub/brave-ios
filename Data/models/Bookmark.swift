@@ -254,11 +254,12 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, CRUD {
         }
     }
 
-    public class func reorderBookmarks(frc: NSFetchedResultsController<Bookmark>?, sourceIndexPath: IndexPath,
-                                destinationIndexPath: IndexPath) {
-        guard let dest = frc?.object(at: destinationIndexPath), let src = frc?.object(at: sourceIndexPath) else {
-            return
-        }
+    public class func reorderBookmarks(frc: NSFetchedResultsController<Bookmark>?, sourceIndexPath: IndexPath, 
+                                       destinationIndexPath: IndexPath) {
+        guard let frc = frc else { return }
+        
+        let src = frc.object(at: sourceIndexPath)
+        let dest = frc.object(at: destinationIndexPath)
         
         if dest === src {
             return
@@ -267,7 +268,7 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, CRUD {
         // Warning, this could be a bottleneck, grabs ALL the bookmarks in the current folder
         // But realistically, with a batch size of 20, and most reads around 1ms, a bottleneck here is an edge case.
         // Optionally: grab the parent folder, and the on a bg thread iterate the bms and update their order. Seems like overkill.
-        guard var bms = frc?.fetchedObjects else { return }
+        guard var bms = frc.fetchedObjects else { return }
         bms.remove(at: bms.index(of: src)!)
         if sourceIndexPath.row > destinationIndexPath.row {
             // insert before
@@ -285,7 +286,7 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, CRUD {
         // If I save while the animation is happening, the rows look screwed up (draw on top of each other).
         // Adding a delay to let animation complete avoids this problem
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(250)) {
-            DataController.save(context: frc?.managedObjectContext)
+            DataController.save(context: frc.managedObjectContext)
         }
     }
     
