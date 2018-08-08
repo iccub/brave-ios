@@ -6,7 +6,7 @@ import CoreData
 import Foundation
 import Shared
 
-public final class Device: NSManagedObject, Syncable, CRUD {
+public final class Device: NSManagedObject, CRUD {
     
     // Check if this can be nested inside the method
     private static var sharedCurrentDevice: Device?
@@ -29,40 +29,8 @@ public final class Device: NSManagedObject, Syncable, CRUD {
         set(value) { deviceDisplayId = SyncHelpers.syncDisplay(fromUUID: value) }
     }
     
-    // This should be abstractable
-    public func asDictionary(deviceId: [Int]?, action: Int?) -> [String: Any] {
-        return SyncDevice(record: self, deviceId: deviceId, action: action).dictionaryRepresentation()
-    }
-    
-    public static func add(rootObject root: SyncRecord?, save: Bool, sendToSync: Bool, context: NSManagedObjectContext) -> Syncable? {
-        
-        // No guard, let bleed through to allow 'empty' devices (e.g. local)
-        let root = root as? SyncDevice
-
-        let device = Device(entity: Device.entity(context: context), insertInto: context)
-        
-        device.created = root?.syncNativeTimestamp ?? Date()
-        device.syncUUID = root?.objectId ?? SyncCrypto.uniqueSerialBytes(count: 16)
-
-        device.update(syncRecord: root)
-        
-        if save {
-            DataController.save(context: context)
-        }
-        
-        return device
-    }
-    
     public class func add(save: Bool = false, context: NSManagedObjectContext) -> Device? {
         return add(rootObject: nil, save: save, sendToSync: false, context: context) as? Device
-    }
-    
-    public func update(syncRecord record: SyncRecord?) {
-        guard let root = record as? SyncDevice else { return }
-        self.name = root.name
-        self.deviceId = root.deviceId
-        
-        // No save currently
     }
     
     public static func currentDevice() -> Device? {
@@ -110,4 +78,38 @@ public final class Device: NSManagedObject, Syncable, CRUD {
         }
     }
     
+}
+
+extension Device: Syncable {
+    public static func add(rootObject root: SyncRecord?, save: Bool, sendToSync: Bool, context: NSManagedObjectContext) -> Syncable? {
+        
+        // No guard, let bleed through to allow 'empty' devices (e.g. local)
+        let root = root as? SyncDevice
+        
+        let device = Device(entity: Device.entity(context: context), insertInto: context)
+        
+        device.created = root?.syncNativeTimestamp ?? Date()
+        device.syncUUID = root?.objectId ?? SyncCrypto.uniqueSerialBytes(count: 16)
+        
+        device.update(syncRecord: root)
+        
+        if save {
+            DataController.save(context: context)
+        }
+        
+        return device
+    }
+    
+    public func update(syncRecord record: SyncRecord?) {
+        guard let root = record as? SyncDevice else { return }
+        self.name = root.name
+        self.deviceId = root.deviceId
+        
+        // No save currently
+    }
+    
+    // This should be abstractable
+    public func asDictionary(deviceId: [Int]?, action: Int?) -> [String: Any] {
+        return SyncDevice(record: self, deviceId: deviceId, action: action).dictionaryRepresentation()
+    }
 }

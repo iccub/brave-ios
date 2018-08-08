@@ -49,13 +49,17 @@ public class DataController: NSObject {
             return
         }
         
-        if !context.hasChanges { return }
-        
-        do {
-            try context.save()
-        } catch {
-            assertionFailure("Error saving DB: \(error)")
+        context.perform {
+            if !context.hasChanges { return }
+            
+            do {
+                try context.save()
+            } catch {
+                assertionFailure("Error saving DB: \(error)")
+            }
         }
+        
+        
     }
     
     public static func resetDatabase() {
