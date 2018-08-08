@@ -25,6 +25,7 @@
 		0ADEC8ED210F73AA0082A614 /* BookmarkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ADEC8EC210F73AA0082A614 /* BookmarkTests.swift */; };
 		0ADEC8F1210F8B470082A614 /* CoreDataTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ADEC8F0210F8B470082A614 /* CoreDataTestCase.swift */; };
 		0ADEC8F3210FB43E0082A614 /* DataControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ADEC8F2210FB43E0082A614 /* DataControllerTests.swift */; };
+		0AFBBF842119FB2E00A829A1 /* TabMOTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AFBBF832119FB2E00A829A1 /* TabMOTests.swift */; };
 		0B21E8061E26CCB7000C8779 /* EarlGrey.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 0B21E8051E26CCB7000C8779 /* EarlGrey.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		0B305E1B1E3A98A900BE0767 /* BookmarkingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B305E1A1E3A98A900BE0767 /* BookmarkingTests.swift */; };
 		0B3D670E1E09B90B00C1EFC7 /* AuthenticationTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B3D670D1E09B90B00C1EFC7 /* AuthenticationTest.swift */; };
@@ -901,6 +902,7 @@
 		0ADEC8EC210F73AA0082A614 /* BookmarkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkTests.swift; sourceTree = "<group>"; };
 		0ADEC8F0210F8B470082A614 /* CoreDataTestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataTestCase.swift; sourceTree = "<group>"; };
 		0ADEC8F2210FB43E0082A614 /* DataControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataControllerTests.swift; sourceTree = "<group>"; };
+		0AFBBF832119FB2E00A829A1 /* TabMOTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabMOTests.swift; sourceTree = "<group>"; };
 		0B21E8051E26CCB7000C8779 /* EarlGrey.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = EarlGrey.framework; path = Carthage/Build/iOS/EarlGrey.framework; sourceTree = "<group>"; };
 		0B305E1A1E3A98A900BE0767 /* BookmarkingTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BookmarkingTests.swift; sourceTree = "<group>"; };
 		0B3D670D1E09B90B00C1EFC7 /* AuthenticationTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AuthenticationTest.swift; sourceTree = "<group>"; };
@@ -1720,6 +1722,7 @@
 				0ADEC8F2210FB43E0082A614 /* DataControllerTests.swift */,
 				0ABEC8272111CB9A000B9C1D /* CRUDProtocolsTests.swift */,
 				0ADEC8EC210F73AA0082A614 /* BookmarkTests.swift */,
+				0AFBBF832119FB2E00A829A1 /* TabMOTests.swift */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -3865,6 +3868,7 @@
 				0ABEC8282111CB9A000B9C1D /* CRUDProtocolsTests.swift in Sources */,
 				0ADEC8F3210FB43E0082A614 /* DataControllerTests.swift in Sources */,
 				0ADEC8F1210F8B470082A614 /* CoreDataTestCase.swift in Sources */,
+				0AFBBF842119FB2E00A829A1 /* TabMOTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

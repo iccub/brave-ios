@@ -102,8 +102,8 @@ public final class TabMO: NSManagedObject, CRUD {
     
     public class func saveScreenshotUUID(_ uuid: UUID?, tabId: String?) {
         let context = DataController.newBackgroundContext()
-        let tabMO = TabMO.get(fromId: tabId, context: context)
-        tabMO?.screenshotUUID = uuid
+        guard let tabMO = TabMO.get(fromId: tabId, context: context) else { return }
+        tabMO.screenshotUUID = uuid
         DataController.save(context: context)
     }
 
@@ -112,7 +112,7 @@ public final class TabMO: NSManagedObject, CRUD {
         return all(sortDescriptors: sortDescriptors) ?? []
     }
     
-    public class func get(fromId id: String?, context: NSManagedObjectContext) -> TabMO? {
+    public class func get(fromId id: String?, context: NSManagedObjectContext = DataController.viewContext) -> TabMO? {
         guard let id = id else { return nil }
         let predicate = NSPredicate(format: "\(#keyPath(TabMO.syncUUID)) == %@", id)
         
