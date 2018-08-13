@@ -15,7 +15,11 @@ class DeviceTests: CoreDataTestCase {
     }
     
     func testCurrentDevice() {
-        let device = Device.currentDevice()
+        var device: Device?
+        
+        backgroundSaveAndWaitForExpectation {
+            device = Device.currentDevice()
+        }
         let newDevice = Device.currentDevice()
         
         XCTAssertEqual(try! DataController.viewContext.fetch(fetchRequest).count, 1)
@@ -26,7 +30,7 @@ class DeviceTests: CoreDataTestCase {
 
     func testDeleteAll() {
         // TODO: Finish it
-        
+        Device.currentDevice()
     }
 
 }

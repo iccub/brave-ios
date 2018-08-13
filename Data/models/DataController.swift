@@ -85,6 +85,7 @@ public class DataController: NSObject {
         
         let backgroundContext = shared.container.newBackgroundContext()
         backgroundContext.mergePolicy = NSMergePolicy.mergeByPropertyStoreTrump
+        // backgroundContext.automaticallyMergesChangesFromParent = true
         return backgroundContext
     }
 }

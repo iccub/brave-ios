@@ -24,14 +24,16 @@ class CRUDProtocolsTests: CoreDataTestCase {
     }
     
     private func insertObjects(count: Int) {
-        let context = DataController.viewContext
+        let context = DataController.newBackgroundContext()
         
         for i in 1...count {
             let object = CRUDClass(entity: entity(for: context), insertInto: context)
             object.title = "\(i)"
         }
         
-        DataController.save(context: context)
+        backgroundSaveAndWaitForExpectation {
+            DataController.save(context: context)
+        }
         
         // Make sure each test case has the same amount of records to work with.
         XCTAssertEqual(try! context.count(for: fetchRequest), count)
@@ -98,9 +100,9 @@ class CRUDProtocolsTests: CoreDataTestCase {
         let title = "1"
         let first = firstObject(title: title)
         
-        contextSaveExpectation()
-        first?.delete()
-        waitForExpectations(timeout: 1, handler: nil)
+        backgroundSaveAndWaitForExpectation {
+            first?.delete()
+        }
         
         XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), initialObjectsCount - 1)
         
@@ -110,13 +112,18 @@ class CRUDProtocolsTests: CoreDataTestCase {
     }
 
     func testDeleteAll() {
-        CRUDClass.deleteAll()
+        backgroundSaveAndWaitForExpectation {
+            CRUDClass.deleteAll()
+        }
+        
         XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), 0)
     }
     
     func testDeleteAllWithPredicate() {
         let predicate = NSPredicate(format: "title = %@ OR title = %@", "1", "2")
-        CRUDClass.deleteAll(where: predicate)
+        backgroundSaveAndWaitForExpectation {
+            CRUDClass.deleteAll(where: predicate)
+        }
         XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), initialObjectsCount - 2)
     }
     

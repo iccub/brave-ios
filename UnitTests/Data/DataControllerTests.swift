@@ -75,14 +75,16 @@ class DataControllerTests: CoreDataTestCase {
         let context = DataController.newBackgroundContext()
         
         let object = TopSite(entity: entity(for: context), insertInto: context)
-        DataController.save(context: context)
+        backgroundSaveAndWaitForExpectation {
+            DataController.save(context: context)
+        }
         
         var result = try! context.fetch(fetchRequest)
         XCTAssertEqual(result.count, 1)
         
-        contextSaveExpectation()
-        object.delete()
-        waitForExpectations(timeout: 1, handler: nil)
+        backgroundSaveAndWaitForExpectation {
+            object.delete()
+        }
         
         result = try! DataController.viewContext.fetch(fetchRequest)
         
