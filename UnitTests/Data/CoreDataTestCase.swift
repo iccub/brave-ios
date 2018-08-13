@@ -41,4 +41,12 @@ class CoreDataTestCase: XCTestCase {
             contextSaveExpectation.fulfill()
         }
     }
+    
+    /// Waits for core data context save notification. Use this for single background context saves if you want to wait
+    /// for view context to update itself. Unfortunately there is no notification after changes are merged into context.
+    func backgroundSaveAndWaitForExpectation(code: () -> ()) {
+        contextSaveExpectation()
+        code()
+        waitForExpectations(timeout: 2, handler: nil)
+    }
 }

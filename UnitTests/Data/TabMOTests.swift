@@ -14,11 +14,9 @@ class TabMOTests: CoreDataTestCase {
         return NSEntityDescription.entity(forEntityName: String(describing: TabMO.self), in: context)!
     }
 
-    func testCreate() {
-        _ = TabMO.create()
-        
+    func testCreate() {        
+        let object = createAndWait()
         XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), 1)
-        let object = try! DataController.viewContext.fetch(fetchRequest).first!
         
         XCTAssertNotNil(object.syncUUID)
         XCTAssertNotNil(object.imageUrl)
@@ -43,10 +41,8 @@ class TabMOTests: CoreDataTestCase {
         let newTitle = "UpdatedTitle"
         let newUrl = "http://example.com"
         
-        _ = TabMO.create()
+        var object = createAndWait()
         XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), 1)
-        
-        var object = try! DataController.viewContext.fetch(fetchRequest).first!
         
         XCTAssertNotEqual(object.title, newTitle)
         XCTAssertNotEqual(object.url, newUrl)
@@ -54,11 +50,13 @@ class TabMOTests: CoreDataTestCase {
         let tabData = SavedTab(id: object.syncUUID!, title: newTitle, url: newUrl, isSelected: true, order: 10, 
                                screenshot: UIImage.sampleImage(), history: ["history1", "history2"], historyIndex: 20)
         
-        TabMO.update(tabData: tabData)
+        backgroundSaveAndWaitForExpectation {
+            TabMO.update(tabData: tabData)
+        }
         XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), 1)
         
         // Need to refresh context here.
-        DataController.viewContext.reset()
+         DataController.viewContext.reset()
         
         object = try! DataController.viewContext.fetch(fetchRequest).first!
         
@@ -83,10 +81,8 @@ class TabMOTests: CoreDataTestCase {
         let newUrl = "http://example.com"
         let wrongId = "999"
         
-        _ = TabMO.create()
+        var object = createAndWait()
         XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), 1)
-        
-        var object = try! DataController.viewContext.fetch(fetchRequest).first!
         
         XCTAssertNotEqual(object.title, newTitle)
         XCTAssertNotEqual(object.url, newUrl)
@@ -95,6 +91,9 @@ class TabMOTests: CoreDataTestCase {
                                screenshot: UIImage.sampleImage(), history: ["history1", "history2"], historyIndex: 20)
         
         TabMO.update(tabData: tabData)
+        // We can't wait for context save here, wrong id is being passed, let's fake it by waiting one second
+        sleep(UInt32(1))
+        
         XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), 1)
         
         // Need to refresh context here.
@@ -107,28 +106,31 @@ class TabMOTests: CoreDataTestCase {
     }
     
     func testDelete() {
-        _ = TabMO.create()
-        let object = try! DataController.viewContext.fetch(fetchRequest).first!
+        let object = createAndWait()
         
         XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), 1)
-        object.delete()
+        backgroundSaveAndWaitForExpectation {
+            object.delete()
+        }
+        
+        // FIXME: This sometimes fails.
         XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), 0)
     }
     
     func testImageUrl() {
-        _ = TabMO.create()
-        let object = try! DataController.viewContext.fetch(fetchRequest).first!
+        let object = createAndWait()
         
         XCTAssertEqual(object.imageUrl, URL(string: "https://imagecache.mo/\(object.syncUUID!).png"))
     }
     
     func testSaveScreenshotUUID() {
-        _ = TabMO.create()
         let newUUID = UUID()
-        var object = try! DataController.viewContext.fetch(fetchRequest).first!
+        var object = createAndWait()
         
         XCTAssertNil(object.screenshotUUID)
-        TabMO.saveScreenshotUUID(newUUID, tabId: object.syncUUID)
+        backgroundSaveAndWaitForExpectation {
+            TabMO.saveScreenshotUUID(newUUID, tabId: object.syncUUID)
+        }
         DataController.viewContext.reset()
         
         object = try! DataController.viewContext.fetch(fetchRequest).first!
@@ -137,9 +139,8 @@ class TabMOTests: CoreDataTestCase {
     
     func testSaveScreenshotUUIDWrongId() {
         let wrongId = "999"
-        _ = TabMO.create()
         let newUUID = UUID()
-        var object = try! DataController.viewContext.fetch(fetchRequest).first!
+        var object = createAndWait()
         
         XCTAssertNil(object.screenshotUUID)
         TabMO.saveScreenshotUUID(newUUID, tabId: wrongId)
@@ -150,10 +151,13 @@ class TabMOTests: CoreDataTestCase {
     }
     
     private func createAndUpdate(order: Int) {
-        let object = TabMO.create()
+        let object = createAndWait()
+        
         let tabData = SavedTab(id: object.syncUUID!, title: "title", url: "url", isSelected: false, order: Int16(order), 
                                screenshot: nil, history: [], historyIndex: 0)
-        TabMO.update(tabData: tabData)
+        backgroundSaveAndWaitForExpectation {
+            TabMO.update(tabData: tabData)
+        }
         
     }
     
@@ -178,12 +182,19 @@ class TabMOTests: CoreDataTestCase {
     }
     
     func testGetFromId() {
-        _ = TabMO.create()
         let wrongId = "999"
-        let object = try! DataController.viewContext.fetch(fetchRequest).first!
+        let object = createAndWait()
         
         XCTAssertNotNil(TabMO.get(fromId: object.syncUUID!))
         XCTAssertNil(TabMO.get(fromId: wrongId))
+    }
+    
+    @discardableResult private func createAndWait() -> TabMO {
+        backgroundSaveAndWaitForExpectation {
+            _ = TabMO.create()
+        }
+        
+        return try! DataController.viewContext.fetch(fetchRequest).first!
     }
 }
 
