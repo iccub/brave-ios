@@ -8,10 +8,10 @@ import CoreData
 
 class DeviceTests: CoreDataTestCase {
     
-    let fetchRequest = NSFetchRequest<Bookmark>(entityName: String(describing: Bookmark.self))
+    let fetchRequest = NSFetchRequest<Device>(entityName: String(describing: Device.self))
     
     private func entity(for context: NSManagedObjectContext) -> NSEntityDescription {
-        return NSEntityDescription.entity(forEntityName: String(describing: Bookmark.self), in: context)!
+        return NSEntityDescription.entity(forEntityName: String(describing: Device.self), in: context)!
     }
     
     func testCurrentDevice() {
