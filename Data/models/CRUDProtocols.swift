@@ -27,27 +27,45 @@ public protocol Readable where Self: NSManagedObject {
 // MARK: - Implementations
 public extension Deletable where Self: NSManagedObject {
     func delete() {
-        let context = self.managedObjectContext ?? DataController.newBackgroundContext()
-        context.delete(self)
-        DataController.save(context: context)
+        let context = DataController.newBackgroundContext()
+        
+        do {
+            let objectOnContext = try context.existingObject(with: self.objectID)
+            context.delete(objectOnContext)
+        
+            DataController.save(context: context)
+        } catch {
+            log.warning("Could not find object: \(self) on a background context.")
+        }
     }
     
     static func deleteAll(where predicate: NSPredicate? = nil) {
         let context = DataController.newBackgroundContext()
-        let request = getFetchRequest()
-        
+        guard let request = getFetchRequest() as? NSFetchRequest<NSFetchRequestResult> else { return }
         request.predicate = predicate
         
         do {
-            let results = try context.fetch(request)
-            results.forEach {
-                context.delete($0)
+            // NSBatchDeleteRequest can't be used for in-memory store we use in tests.
+            // Have to delete objects one by one.
+            if AppConstants.IsRunningTest {
+                let results = try context.fetch(request) as? [NSManagedObject]
+                results?.forEach {
+                    context.delete($0)
+                }
+            } else {
+                let deleteRequest = NSBatchDeleteRequest(fetchRequest: request)
+                let result = try context.execute(deleteRequest) as? NSBatchDeleteResult
+                
+                let objectIDArray = result?.result as? [NSManagedObjectID]
+                let changes = [NSDeletedObjectsKey: objectIDArray as Any]
+                
+                NSManagedObjectContext.mergeChanges(fromRemoteContextSave: changes, into: [context])
             }
-            
-            DataController.save(context: context)
         } catch {
             log.error("Delete all error: \(error)")
         }
+        
+        DataController.save(context: context)        
     }
 }
 
