@@ -443,6 +443,55 @@ extension Bookmark {
         record?.delete()
     }
     
+    /// Gets all nested bookmarks recursively.
+    public static func getAllChildren(forFolderUUID syncUUID: [Int]?,
+                                   context: NSManagedObjectContext = DataController.viewContext) -> [Bookmark]? {
+        guard let searchableUUID = SyncHelpers.syncDisplay(fromUUID: syncUUID) else {
+            return nil
+        }
+        
+        let syncParentDisplayUUIDKeyPath = #keyPath(Bookmark.syncParentDisplayUUID)
+        
+        let predicate = NSPredicate(format: "\(syncParentDisplayUUIDKeyPath) == %@", searchableUUID)
+        
+        var allBookmarks = [Bookmark]()
+        
+        let result = all(where: predicate, context: context)
+        
+        result?.forEach {
+            allBookmarks.append($0)
+            
+            if $0.isFolder {
+                if let nestedBookmarks = getAllChildren(forFolderUUID: $0.syncUUID) {
+                    allBookmarks.append(contentsOf: nestedBookmarks)
+                }
+            }
+        }
+        
+        return allBookmarks
+    }
+    
+    public func removeFolderAndSendSyncRecords(uuid: [Int]?) {
+        if !isFolder { return }
+        
+        // Before we delete folder and its children, we need to grab all children bookmarks
+        // and send them to sync with `delete` action.
+        
+        var allBookmarks = [Bookmark]()
+        allBookmarks.append(self)
+        
+        if let allNestedBookmarks = Bookmark.getAllChildren(forFolderUUID: syncUUID) {
+            log.warning("All nested bookmarks of :\(String(describing: title)) folder is nil")
+            
+            allBookmarks.append(contentsOf: allNestedBookmarks)
+        }
+        
+        Sync.shared.sendSyncRecords(action: .delete, records: allBookmarks)
+        
+        delete()
+        
+    }
+    
     public class func frecencyQuery(context: NSManagedObjectContext, containing: String?) -> [Bookmark] {
         let fetchRequest = NSFetchRequest<Bookmark>()
         fetchRequest.fetchLimit = 5

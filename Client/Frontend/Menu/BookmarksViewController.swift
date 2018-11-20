@@ -431,20 +431,16 @@ class BookmarksViewController: SiteTableViewController {
     
     let deleteAction = UITableViewRowAction(style: UITableViewRowActionStyle.destructive, title: Strings.Delete, handler: { (action, indexPath) in
       
-      func delete() {
-        item.remove(save: true)
-      }
-      
       if let children = item.children, !children.isEmpty {
         let alert = UIAlertController(title: "Delete Folder?", message: "This will delete all folders and bookmarks inside. Are you sure you want to continue?", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Cancel", style: UIAlertActionStyle.cancel, handler: nil))
         alert.addAction(UIAlertAction(title: "Yes, Delete", style: UIAlertActionStyle.destructive) { action in
-          delete()
+            item.removeFolderAndSendSyncRecords(uuid: item.syncUUID)
         })
         
         self.present(alert, animated: true, completion: nil)
       } else {
-        delete()
+        item.remove(save: true)
       }
     })
     
