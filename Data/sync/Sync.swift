@@ -113,13 +113,11 @@ public class Sync: JSInjector {
     fileprivate let prefFetchTimestamp = "sync-fetch-timestamp"
     fileprivate let prefBaseOrder = "sync-base-order"
     
-    //    #if DEBUG
-    fileprivate let isDebug = true
-    fileprivate let serverUrl = "https://sync-staging.brave.com"
-    //    #else
-    //    fileprivate let isDebug = false
-    //    fileprivate let serverUrl = "https://sync.brave.com"
-    //    #endif
+    fileprivate lazy var isDebug: Bool = { return !AppConstants.BuildChannel.isRelease }()
+    
+    fileprivate lazy var serverUrl: String = {
+        return isDebug ? "https://sync-staging.brave.com" : "https://sync.brave.com"
+    }()
     
     fileprivate let apiVersion = 0
     
@@ -181,24 +179,6 @@ public class Sync: JSInjector {
     /// seed (optional): The user seed, in the form of string hex values. Must be even number : ["00", "ee", "4a", "42"]
     /// Notice:: seed will be ignored if the keychain already has one, a user must disconnect from existing sync group prior to joining a new one
     public func initializeSync(seed: [Int]? = nil, deviceName: String? = nil) {
-        
-        #if NO_SYNC
-        if syncSeed == nil { return }
-        
-        leaveSyncGroup()
-        
-        let msg = """
-            Sync has been disabled, as it will not be included in the next couple of production builds.
-            Your iOS device has been auto-removed from any sync groups.
-        """
-        
-        let alert = UIAlertController(title: "Sync Disabled", message: msg, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: nil))
-        guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else {
-            fatalError()
-        }
-        appDelegate.browserViewController.present(alert, animated: true, completion: nil)
-        #endif
         
         if let joinedSeed = seed, joinedSeed.count == Sync.SeedByteLength {
             // Always attempt seed write, setter prevents bad overwrites
