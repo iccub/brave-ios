@@ -118,7 +118,7 @@ public final class Domain: NSManagedObject, CRUD {
 
     class func deleteNonBookmarkedAndClearSiteVisits(context: NSManagedObjectContext, _ completionOnMain: @escaping () -> Void) {
         
-        context.perform {
+        context.performAndWait {
             let fetchRequest = NSFetchRequest<Domain>()
             fetchRequest.entity = Domain.entity(context)
             do {

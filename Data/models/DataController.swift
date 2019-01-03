@@ -51,7 +51,7 @@ public class DataController: NSObject {
             log.warning("Writing to view context, this should be avoided.")
         }
         
-        context.perform {
+        context.performAndWait {
             if !context.hasChanges { return }
             
             do {
@@ -75,7 +75,9 @@ public class DataController: NSObject {
     private func addPersistentStore(for container: NSPersistentContainer) {
         if AppConstants.IsRunningTest {
             let description = NSPersistentStoreDescription()
-            description.type = NSInMemoryStoreType
+            // Mounting test database to /dev/null allows us to easily reset app state between launches
+            // and unlike in-memory store it supports all SQLite features like batch operations.
+            description.url = URL(fileURLWithPath: "/dev/null")
             
             container.persistentStoreDescriptions = [description]
             return

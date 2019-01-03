@@ -51,17 +51,8 @@ public extension Deletable where Self: NSManagedObject {
         
         context.performAndWait {
             do {
-                // NSBatchDeleteRequest can't be used for in-memory store we use in tests.
-                // Have to delete objects one by one.
-                if AppConstants.IsRunningTest {
-                    let results = try context.fetch(request) as? [NSManagedObject]
-                    results?.forEach {
-                        context.delete($0)
-                    }
-                } else {
-                    let deleteRequest = NSBatchDeleteRequest(fetchRequest: request)
-                    try context.execute(deleteRequest)
-                }
+                let deleteRequest = NSBatchDeleteRequest(fetchRequest: request)
+                try context.execute(deleteRequest)
             } catch {
                 log.error("Delete all error: \(error)")
             }

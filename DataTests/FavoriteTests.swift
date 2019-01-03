@@ -56,6 +56,7 @@ class FavoriteTests: CoreDataTestCase {
         // Make sure only one record was added to DB
         XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), 1)
         
+        DataController.viewContext.refreshAllObjects()
         XCTAssertNotEqual(object.url, url)
         XCTAssertEqual(object.url, newUrl)
     }
@@ -76,6 +77,7 @@ class FavoriteTests: CoreDataTestCase {
         // Make sure only one record was added to DB
         XCTAssertEqual(try! DataController.viewContext.count(for: fetchRequest), 1)
         
+        DataController.viewContext.refreshAllObjects()
         XCTAssertNotEqual(object.displayTitle, customTitle)
         XCTAssertEqual(object.displayTitle, newTitle)
     }

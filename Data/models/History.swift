@@ -56,7 +56,7 @@ public final class History: NSManagedObject, WebsitePresentable, CRUD {
 
     public class func add(_ title: String, url: URL) {
         let context = DataController.newBackgroundContext()
-        context.perform {
+        context.performAndWait {
             var item = History.getExisting(url, context: context)
             if item == nil {
                 item = History(entity: History.entity(context), insertInto: context)
