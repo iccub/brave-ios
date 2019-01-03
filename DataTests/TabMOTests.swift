@@ -195,9 +195,13 @@ class TabMOTests: CoreDataTestCase {
     
     @discardableResult private func createAndWait() -> TabMO {
         let uuid = UUID().uuidString
+        let context = DataController.newBackgroundContext()
         
         backgroundSaveAndWaitForExpectation {
-            _ = TabMO.create(uuidString: uuid)
+            context.performAndWait {
+                _ = TabMO.create(uuidString: uuid, context: context)
+            }
+            
         }
         
         return TabMO.get(fromId: uuid, context: DataController.viewContext)!

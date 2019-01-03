@@ -19,7 +19,9 @@ class DataControllerTests: CoreDataTestCase {
         XCTAssertEqual(try! viewContext.count(for: fetchRequest), 0)
         
         let backgroundContext = DataController.newBackgroundContext()
-        XCTAssertEqual(try! backgroundContext.count(for: fetchRequest), 0)
+        backgroundContext.performAndWait {
+            XCTAssertEqual(try! backgroundContext.count(for: fetchRequest), 0)
+        }
         
         // Checking rest of entities
         let bookmarkFR = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: Bookmark.self))
@@ -56,14 +58,19 @@ class DataControllerTests: CoreDataTestCase {
     func testSavingBackgroundContext() {
         let context = DataController.newBackgroundContext()
         
-        _ = Device(entity: entity(for: context), insertInto: context)
+        context.performAndWait {
+            _ = Device(entity: entity(for: context), insertInto: context)
+        }
+        
         backgroundSaveAndWaitForExpectation {
             DataController.save(context: context)
         }
         
-        let result = try! context.fetch(fetchRequest)
+        context.performAndWait {
+            let result = try! context.fetch(fetchRequest)
+            XCTAssertEqual(result.count, 1)
+        }
         
-        XCTAssertEqual(result.count, 1)
         
         // Check if object got updated on view context(merge from parent check)
         XCTAssertEqual(try! DataController.viewContext.fetch(fetchRequest).count, 1)
@@ -72,7 +79,10 @@ class DataControllerTests: CoreDataTestCase {
     func testSaveAndRemove() {
         let context = DataController.newBackgroundContext()
         
-        _ = Device(entity: entity(for: context), insertInto: context)
+        context.performAndWait {
+            _ = Device(entity: entity(for: context), insertInto: context)
+        }
+        
         backgroundSaveAndWaitForExpectation {
             DataController.save(context: context)
         }
@@ -96,8 +106,10 @@ class DataControllerTests: CoreDataTestCase {
     
     func testNoChangesContext() {
         let context = DataController.newBackgroundContext()
-        DataController.save(context: context)
-        XCTAssertEqual(try! context.count(for: fetchRequest), 0)
+        context.performAndWait {
+            DataController.save(context: context)
+            XCTAssertEqual(try! context.count(for: fetchRequest), 0)
+        }
     }
 
 }

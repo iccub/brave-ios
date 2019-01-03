@@ -49,15 +49,19 @@ public final class Device: NSManagedObject, Syncable, CRUD {
         
         // No guard, let bleed through to allow 'empty' devices (e.g. local)
         let root = root as? SyncDevice
-        let device = Device(entity: Device.entity(context: context), insertInto: context)
+        var device: Device?
         
-        device.created = root?.syncNativeTimestamp ?? Date()
-        device.syncUUID = root?.objectId ?? SyncCrypto.uniqueSerialBytes(count: 16)
-        
-        device.update(syncRecord: root)
-        
-        if save {
-            DataController.save(context: context)
+        context.performAndWait {
+            device = Device(entity: Device.entity(context: context), insertInto: context)
+            
+            device?.created = root?.syncNativeTimestamp ?? Date()
+            device?.syncUUID = root?.objectId ?? SyncCrypto.uniqueSerialBytes(count: 16)
+            
+            device?.update(syncRecord: root)
+            
+            if save {
+                DataController.save(context: context)
+            }
         }
         
         return device
@@ -66,13 +70,15 @@ public final class Device: NSManagedObject, Syncable, CRUD {
     public class func add(name: String?, isCurrent: Bool = false) {
         let context = DataController.newBackgroundContext()
         
-        let device = Device(entity: Device.entity(context: context), insertInto: context)
-        device.created = Date()
-        device.syncUUID = SyncCrypto.uniqueSerialBytes(count: 16)
-        device.name = name
-        device.isCurrentDevice = isCurrent
-        
-        DataController.save(context: context)
+        context.performAndWait {
+            let device = Device(entity: Device.entity(context: context), insertInto: context)
+            device.created = Date()
+            device.syncUUID = SyncCrypto.uniqueSerialBytes(count: 16)
+            device.name = name
+            device.isCurrentDevice = isCurrent
+            
+            DataController.save(context: context)
+        }
     }
     
     public func update(syncRecord record: SyncRecord?) {

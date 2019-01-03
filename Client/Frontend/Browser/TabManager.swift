@@ -315,7 +315,10 @@ class TabManager: NSObject {
         let type: TabType = isPrivate ? .private : .regular
         let tab = Tab(configuration: configuration, type: type)
         if !isPrivate {
-            tab.id = id ?? TabMO.create().syncUUID
+            let context = DataController.newBackgroundContext()
+            context.performAndWait {
+                tab.id = id ?? TabMO.create(context: context).syncUUID
+            }
         }
         configureTab(tab, request: request, afterTab: afterTab, flushToDisk: flushToDisk, zombie: zombie, isPrivate: isPrivate)
         return tab
@@ -325,7 +328,13 @@ class TabManager: NSObject {
         assert(Thread.isMainThread)
 
         let tab = Tab(configuration: configuration ?? self.configuration)
-        tab.id = TabMO.create().syncUUID
+        
+        let context = DataController.newBackgroundContext()
+        
+        context.performAndWait {
+            tab.id = TabMO.create(context: context).syncUUID
+        }
+        
         
         configureTab(tab, request: request, afterTab: afterTab, flushToDisk: flushToDisk, zombie: zombie)
         return tab

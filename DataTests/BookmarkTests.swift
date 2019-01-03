@@ -464,9 +464,15 @@ class BookmarkTests: CoreDataTestCase {
     private func createAndWait(url: URL?, title: String?, customTitle: String? = nil, 
                                parentFolder: Bookmark? = nil, isFolder: Bool = false, isFavorite: Bool = false, color: UIColor? = nil, syncOrder: String? = nil) -> Bookmark {
         
+        
+        
         backgroundSaveAndWaitForExpectation {
-            Bookmark.add(url: url, title: title, customTitle: customTitle, parentFolder: parentFolder,
-                         isFolder: isFolder, isFavorite: isFavorite, syncOrder: syncOrder)
+            
+            let context = DataController.newBackgroundContext()
+            context.performAndWait {
+                Bookmark.add(url: url, title: title, customTitle: customTitle, parentFolder: parentFolder,
+                             isFolder: isFolder, isFavorite: isFavorite, syncOrder: syncOrder, context: context)
+            }
         }
         
         return try! DataController.viewContext.fetch(fetchRequest).first!

@@ -116,39 +116,41 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, Syncable, CRUD
             contextToUpdate = DataController.newBackgroundContext()
         }
         
-        guard let bookmarkToUpdate = (try? contextToUpdate?.existingObject(with: objectID)) as? Bookmark,
-            let context = contextToUpdate else {
-                return
-        }
-        
-        // See if there has been any change
-        if self.customTitle == customTitle && self.url == url && syncOrder == newSyncOrder {
-            return
-        }
-        
-        if let ct = customTitle, !ct.isEmpty {
-            bookmarkToUpdate.customTitle = customTitle
-        }
-        
-        if let u = url, !u.isEmpty {
-            bookmarkToUpdate.url = url
-            if let theURL = URL(string: u) {
-                bookmarkToUpdate.domain = Domain.getOrCreateForUrl(theURL, context: context)
-            } else {
-                bookmarkToUpdate.domain = nil
+        contextToUpdate?.performAndWait {
+            guard let bookmarkToUpdate = (try? contextToUpdate?.existingObject(with: objectID)) as? Bookmark,
+                let context = contextToUpdate else {
+                    return
             }
-        }
-        
-        if newSyncOrder != nil {
-            syncOrder = newSyncOrder
-        }
-        
-        if save {
-            DataController.save(context: context)
-        }
-        
-        if !isFavorite && sendToSync {
-            Sync.shared.sendSyncRecords(action: .update, records: [bookmarkToUpdate])
+            
+            // See if there has been any change
+            if self.customTitle == customTitle && self.url == url && syncOrder == newSyncOrder {
+                return
+            }
+            
+            if let ct = customTitle, !ct.isEmpty {
+                bookmarkToUpdate.customTitle = customTitle
+            }
+            
+            if let u = url, !u.isEmpty {
+                bookmarkToUpdate.url = url
+                if let theURL = URL(string: u) {
+                    bookmarkToUpdate.domain = Domain.getOrCreateForUrl(theURL, context: context)
+                } else {
+                    bookmarkToUpdate.domain = nil
+                }
+            }
+            
+            if newSyncOrder != nil {
+                syncOrder = newSyncOrder
+            }
+            
+            if save {
+                DataController.save(context: context)
+            }
+            
+            if !isFavorite && sendToSync {
+                Sync.shared.sendSyncRecords(action: .update, records: [bookmarkToUpdate])
+            }
         }
     }
     
@@ -176,52 +178,55 @@ public final class Bookmark: NSManagedObject, WebsitePresentable, Syncable, CRUD
         let site = bookmark?.site
         
         var bk: Bookmark!
-        if let id = root?.objectId, let foundbks = Bookmark.get(syncUUIDs: [id], context: context) as? [Bookmark], let foundBK = foundbks.first {
-            // Found a pre-existing bookmark, cannot add duplicate
-            // Turn into 'update' record instead
-            bk = foundBK
-        } else {
-            bk = Bookmark(entity: Bookmark.entity(context: context), insertInto: context)
-        }
         
-        // BRAVE TODO:
-        // if site?.location?.startsWith(WebServer.sharedInstance.base) ?? false {
-        //    return nil
-        // }
-        
-        // Use new values, fallback to previous values
-        bk.url = site?.location ?? bk.url
-        bk.title = site?.title ?? bk.title
-        bk.customTitle = site?.customTitle ?? bk.customTitle // TODO: Check against empty titles
-        bk.isFavorite = bookmark?.isFavorite ?? bk.isFavorite
-        bk.isFolder = bookmark?.isFolder ?? bk.isFolder
-        bk.syncUUID = root?.objectId ?? bk.syncUUID ?? SyncCrypto.uniqueSerialBytes(count: 16)
-        
-        if let location = site?.location, let url = URL(string: location) {
-            bk.domain = Domain.getOrCreateForUrl(url, context: context, save: false)
-        }
-        
-        // This also sets up a parent folder
-        bk.syncParentUUID = bookmark?.parentFolderObjectId ?? bk.syncParentUUID
-        
-        // For folders that are saved _with_ a syncUUID, there may be child bookmarks
-        //  (e.g. sync sent down bookmark before parent folder)
-        if bk.isFolder {
-            // Find all children and attach them
-            if let children = Bookmark.getChildren(forFolderUUID: bk.syncUUID) {
-                
-                // TODO: Setup via bk.children property instead
-                children.forEach { $0.syncParentUUID = bk.syncParentUUID }
+        context.performAndWait {
+            if let id = root?.objectId, let foundbks = Bookmark.get(syncUUIDs: [id], context: context) as? [Bookmark], let foundBK = foundbks.first {
+                // Found a pre-existing bookmark, cannot add duplicate
+                // Turn into 'update' record instead
+                bk = foundBK
+            } else {
+                bk = Bookmark(entity: Bookmark.entity(context: context), insertInto: context)
             }
-        }
-        
-        if save {
-            DataController.save(context: context)
-        }
-        
-        if sendToSync && !bk.isFavorite {
-            // Submit to server, must be on main thread
-            Sync.shared.sendSyncRecords(action: .create, records: [bk])
+            
+            // BRAVE TODO:
+            // if site?.location?.startsWith(WebServer.sharedInstance.base) ?? false {
+            //    return nil
+            // }
+            
+            // Use new values, fallback to previous values
+            bk.url = site?.location ?? bk.url
+            bk.title = site?.title ?? bk.title
+            bk.customTitle = site?.customTitle ?? bk.customTitle // TODO: Check against empty titles
+            bk.isFavorite = bookmark?.isFavorite ?? bk.isFavorite
+            bk.isFolder = bookmark?.isFolder ?? bk.isFolder
+            bk.syncUUID = root?.objectId ?? bk.syncUUID ?? SyncCrypto.uniqueSerialBytes(count: 16)
+            
+            if let location = site?.location, let url = URL(string: location) {
+                bk.domain = Domain.getOrCreateForUrl(url, context: context, save: false)
+            }
+            
+            // This also sets up a parent folder
+            bk.syncParentUUID = bookmark?.parentFolderObjectId ?? bk.syncParentUUID
+            
+            // For folders that are saved _with_ a syncUUID, there may be child bookmarks
+            //  (e.g. sync sent down bookmark before parent folder)
+            if bk.isFolder {
+                // Find all children and attach them
+                if let children = Bookmark.getChildren(forFolderUUID: bk.syncUUID) {
+                    
+                    // TODO: Setup via bk.children property instead
+                    children.forEach { $0.syncParentUUID = bk.syncParentUUID }
+                }
+            }
+            
+            if save {
+                DataController.save(context: context)
+            }
+            
+            if sendToSync && !bk.isFavorite {
+                // Submit to server, must be on main thread
+                Sync.shared.sendSyncRecords(action: .create, records: [bk])
+            }
         }
         
         return bk

@@ -80,32 +80,40 @@ public final class Domain: NSManagedObject, CRUD {
     public class func setBraveShield(forUrl url: URL, shield: BraveShieldState.Shield, isOn: Bool?,
                                      context: NSManagedObjectContext = DataController.newBackgroundContext()) {
         
-        let domain = Domain.getOrCreateForUrl(url, context: context)
-        let setting = isOn as NSNumber?
-        switch shield {
+        context.performAndWait {
+            let domain = Domain.getOrCreateForUrl(url, context: context)
+            let setting = isOn as NSNumber?
+            switch shield {
             case .AllOff: domain.shield_allOff = setting
             case .AdblockAndTp: domain.shield_adblockAndTp = setting
             case .HTTPSE: domain.shield_httpse = setting
             case .SafeBrowsing: domain.shield_safeBrowsing = setting
             case .FpProtection: domain.shield_fpProtection = setting
             case .NoScript: domain.shield_noScript = setting
+            }
+            
+            DataController.save(context: context)
         }
-        
-        DataController.save(context: context)
     }
     
     public class func getBraveShield(forUrl url: URL, shield: BraveShieldState.Shield,
                                      context: NSManagedObjectContext = DataController.newBackgroundContext()) -> NSNumber? {
         
-        let domain = Domain.getOrCreateForUrl(url, context: context)
-        switch shield {
-            case .AllOff: return domain.shield_allOff
-            case .AdblockAndTp: return domain.shield_adblockAndTp
-            case .HTTPSE: return domain.shield_httpse
-            case .SafeBrowsing: return domain.shield_safeBrowsing
-            case .FpProtection: return domain.shield_fpProtection
-            case .NoScript: return domain.shield_noScript
+        var shieldToReturn: NSNumber?
+        
+        context.performAndWait {
+            let domain = Domain.getOrCreateForUrl(url, context: context)
+            switch shield {
+            case .AllOff: shieldToReturn = domain.shield_allOff
+            case .AdblockAndTp: shieldToReturn = domain.shield_adblockAndTp
+            case .HTTPSE: shieldToReturn = domain.shield_httpse
+            case .SafeBrowsing: shieldToReturn = domain.shield_safeBrowsing
+            case .FpProtection: shieldToReturn = domain.shield_fpProtection
+            case .NoScript: shieldToReturn = domain.shield_noScript
+            }
         }
+        
+        return shieldToReturn
     }
 
     class func deleteNonBookmarkedAndClearSiteVisits(context: NSManagedObjectContext, _ completionOnMain: @escaping () -> Void) {

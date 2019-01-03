@@ -18,7 +18,7 @@ extension Preferences {
     
     /// Migrate the users preferences from prior versions of the app (<2.0)
     class func migratePreferences(keyPrefix: String) {
-        if Preferences.Migration.completed.value {
+        if Preferences.Migration.completed.value  || AppConstants.IsRunningTest {
             return
         }
         

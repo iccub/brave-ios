@@ -30,13 +30,15 @@ public extension Deletable where Self: NSManagedObject {
     func delete() {
         let context = DataController.newBackgroundContext()
         
-        do {
-            let objectOnContext = try context.existingObject(with: self.objectID)
-            context.delete(objectOnContext)
-        
-            DataController.save(context: context)
-        } catch {
-            log.warning("Could not find object: \(self) on a background context.")
+        context.performAndWait {
+            do {
+                let objectOnContext = try context.existingObject(with: self.objectID)
+                context.delete(objectOnContext)
+                
+                DataController.save(context: context)
+            } catch {
+                log.warning("Could not find object: \(self) on a background context.")
+            }
         }
     }
     
@@ -47,23 +49,25 @@ public extension Deletable where Self: NSManagedObject {
         request.predicate = predicate
         request.includesPropertyValues = includesPropertyValues
         
-        do {
-            // NSBatchDeleteRequest can't be used for in-memory store we use in tests.
-            // Have to delete objects one by one.
-            if AppConstants.IsRunningTest {
-                let results = try context.fetch(request) as? [NSManagedObject]
-                results?.forEach {
-                    context.delete($0)
+        context.performAndWait {
+            do {
+                // NSBatchDeleteRequest can't be used for in-memory store we use in tests.
+                // Have to delete objects one by one.
+                if AppConstants.IsRunningTest {
+                    let results = try context.fetch(request) as? [NSManagedObject]
+                    results?.forEach {
+                        context.delete($0)
+                    }
+                } else {
+                    let deleteRequest = NSBatchDeleteRequest(fetchRequest: request)
+                    try context.execute(deleteRequest)
                 }
-            } else {
-                let deleteRequest = NSBatchDeleteRequest(fetchRequest: request)
-                try context.execute(deleteRequest)
+            } catch {
+                log.error("Delete all error: \(error)")
             }
-        } catch {
-            log.error("Delete all error: \(error)")
+            
+            if save { DataController.save(context: context) }
         }
-        
-        if save { DataController.save(context: context) }
     }
 }
 
@@ -95,13 +99,17 @@ public extension Readable where Self: NSManagedObject {
         request.sortDescriptors = sortDescriptors
         request.fetchLimit = fetchLimit
         
-        do {
-            return try context.fetch(request)
-        } catch {
-            log.error("Fetch error: \(error)")
+        var allRecords: [Self]?
+        
+        context.performAndWait {
+            do {
+                allRecords = try context.fetch(request)
+            } catch {
+                log.error("Fetch error: \(error)")
+            }
         }
         
-        return nil
+        return allRecords
     }
 }
 

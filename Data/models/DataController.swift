@@ -47,7 +47,7 @@ public class DataController: NSObject {
             return
         }
         
-        if context == DataController.viewContext {
+        if context == DataController.viewContext && !AppConstants.IsRunningTest {
             log.warning("Writing to view context, this should be avoided.")
         }
         

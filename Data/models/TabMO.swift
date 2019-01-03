@@ -70,41 +70,50 @@ public final class TabMO: NSManagedObject, CRUD {
     }
     
     /// Creates new tab. If you want to add urls to existing tabs use `update()` method. 
-    public class func create(uuidString: String = UUID().uuidString) -> TabMO {
-        let context = DataController.newBackgroundContext()
+    public class func create(uuidString: String = UUID().uuidString, context: NSManagedObjectContext) -> TabMO {
         let tab = TabMO(entity: TabMO.entity(context), insertInto: context)
         // TODO: replace with logic to create sync uuid then buble up new uuid to browser.
         tab.syncUUID = uuidString
         tab.title = Strings.New_Tab
         DataController.save(context: context)
+        
         return tab
     }
 
     // Updates existing tab with new data. Usually called when user navigates to a new website for in his existing tab.
     @discardableResult public class func update(tabData: SavedTab) -> TabMO? {
         let context = DataController.newBackgroundContext()
-        guard let tab = get(fromId: tabData.id, context: context) else { return nil }
+        var tab: TabMO?
         
-        if let screenshot = tabData.screenshot {
-            tab.screenshot = UIImageJPEGRepresentation(screenshot, 1)
+        context.performAndWait {
+            guard let tabToUpdate = get(fromId: tabData.id, context: context) else { return }
+            
+            if let screenshot = tabData.screenshot {
+                tabToUpdate.screenshot = UIImageJPEGRepresentation(screenshot, 1)
+            }
+            tabToUpdate.url = tabData.url
+            tabToUpdate.order = tabData.order
+            tabToUpdate.title = tabData.title
+            tabToUpdate.urlHistorySnapshot = tabData.history as NSArray
+            tabToUpdate.urlHistoryCurrentIndex = tabData.historyIndex
+            tabToUpdate.isSelected = tabData.isSelected
+            
+            DataController.save(context: context)
+            
+            tab = tabToUpdate
         }
-        tab.url = tabData.url
-        tab.order = tabData.order
-        tab.title = tabData.title
-        tab.urlHistorySnapshot = tabData.history as NSArray
-        tab.urlHistoryCurrentIndex = tabData.historyIndex
-        tab.isSelected = tabData.isSelected
-        
-        DataController.save(context: context)
         
         return tab
     }
     
     public class func saveScreenshotUUID(_ uuid: UUID?, tabId: String?) {
         let context = DataController.newBackgroundContext()
-        let tabMO = TabMO.get(fromId: tabId, context: context)
-        tabMO?.screenshotUUID = uuid?.uuidString
-        DataController.save(context: context)
+        
+        context.performAndWait {
+            let tabMO = TabMO.get(fromId: tabId, context: context)
+            tabMO?.screenshotUUID = uuid?.uuidString
+            DataController.save(context: context)
+        }
     }
 
     public class func getAll() -> [TabMO] {
