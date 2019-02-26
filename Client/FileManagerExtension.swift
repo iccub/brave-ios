@@ -81,4 +81,8 @@ public extension FileManager {
             return nil
         }
     }
+    
+    static var documentsDirectory: String? {
+        return NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first
+    }
 }
