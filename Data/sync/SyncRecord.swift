@@ -5,8 +5,6 @@ import Shared
 import CoreData
 import SwiftyJSON
 
-private let log = Logger.browserLogger
-
 protocol SyncRecordProtocol {
     associatedtype CoreDataParallel: Syncable
 //    var CoredataParallel: NSManagedObject.Type?

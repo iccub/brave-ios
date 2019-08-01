@@ -29,8 +29,6 @@ protocol QuickActionHandlerDelegate {
 
 class QuickActions: NSObject {
 
-    fileprivate let log = Logger.browserLogger
-
     static let QuickActionsVersion = "1.0"
     static let QuickActionsVersionKey = "dynamicQuickActionsVersion"
 

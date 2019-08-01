@@ -4,8 +4,7 @@ import Foundation
 import Shared
 import CoreData
 import SwiftyJSON
-
-private let log = Logger.braveSyncLogger
+import os.log
 
 protocol Syncable: class /* where Self: NSManagedObject */ {
     // Used to enforce CD conformity
@@ -58,7 +57,7 @@ extension Syncable {
             do {
                 result = try context.fetch(fetchRequest) as? [NSManagedObject]
             } catch {
-                log.error(error)
+                os_log(.error, log: Log.database, "get() error: %{public}s", error.localizedDescription)
             }
         }
         
@@ -89,7 +88,7 @@ extension Syncable {
         do {
             return try context.fetch(fetchRequest) as? [T]
         } catch {
-            log.error(error)
+            os_log(.error, log: Log.database, "get() error: %{public}s", error.localizedDescription)
         }
         
         return nil

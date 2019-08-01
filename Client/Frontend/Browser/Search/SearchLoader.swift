@@ -9,8 +9,6 @@ import XCGLogger
 import Deferred
 import Data
 
-private let log = Logger.browserLogger
-
 // swiftlint:disable:next force_try
 private let URLBeforePathRegex = try! NSRegularExpression(pattern: "^https?://([^/]+)/", options: [])
 

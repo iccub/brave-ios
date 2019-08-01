@@ -6,8 +6,6 @@ import Shared
 import Storage
 import Data
 
-private let log = Logger.browserLogger
-
 /// A set of methods related to managing favorites. Most are just wrappers over Bookmark model.
 struct FavoritesHelper {
     // Indicates if favorites have been initialized.

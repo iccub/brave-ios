@@ -10,8 +10,6 @@ import Storage
 import Deferred
 import Data
 
-private let log = Logger.browserLogger
-
 protocol TopSitesDelegate: AnyObject {
     func didSelect(input: String)
     func didTapDuckDuckGoCallout()

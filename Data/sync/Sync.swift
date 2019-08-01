@@ -8,8 +8,7 @@ import CoreData
 import SwiftKeychainWrapper
 import SwiftyJSON
 import JavaScriptCore
-
-private let log = Logger.braveSyncLogger
+import os.log
 
 /*
  module.exports.categories = {
@@ -134,7 +133,7 @@ public class Sync: JSInjector {
         let context = JSContext()
         
         context?.exceptionHandler = { _, exc in
-            log.error(exc.debugDescription)
+            os_log(.error, log: Log.sync, "jsContext error: %{public}s", exc.debugDescription)
         }
         
         let script = ScriptOpener.get(withName: "bookmark_util")
@@ -251,7 +250,7 @@ public class Sync: JSInjector {
             // TODO: Move syncSeed validation here, remove elsewhere
             
             if isInSyncGroup && value != nil {
-                log.error("Error, cannot replace sync seed with another seed must set syncSeed to nil prior to replacing it")
+                os_log(.error, log: Log.sync, "Error, cannot replace sync seed with another seed must set syncSeed to nil prior to replacing it")
                 return
             }
             
@@ -387,7 +386,7 @@ extension Sync {
         }
         
         if recordType == .bookmark && baseSyncOrder == nil {
-            log.error("Base sync order is nil.")
+            os_log(.error, log: Log.sync, "Base sync order is nil.")
             completion?(nil)
             return
         }
@@ -409,7 +408,9 @@ extension Sync {
                 self.webView.evaluateJavaScript(evaluate,
                                                 completionHandler: { (result, error) in
                                                     if let error = error {
-                                                        log.error(error)
+                                                        os_log(.error, log: Log.sync,
+                                                               "js error: %{public}s",
+                                                               error.localizedDescription)
                                                     }
                                                     
                                                     completion?(error)
@@ -503,7 +504,7 @@ extension Sync {
                 }
             }
         }
-        log.debug("\(fetchedRecords.count) \(recordType.rawValue) processed")
+        os_log(.debug, log: Log.sync, "%d of %s processed", fetchedRecords.count, recordType.rawValue)
         
         // Make generic when other record types are supported
         if recordType != .bookmark {
@@ -530,15 +531,15 @@ extension Sync {
     }
     
     func deleteSyncUser(_ data: [String: AnyObject]) {
-        log.warning("not implemented: deleteSyncUser() \(data)")
+        os_log(.info, log: Log.sync, "deleteSyncUser() is not implemented")
     }
     
     func deleteSyncCategory(_ data: [String: AnyObject]) {
-        log.warning("not implemented: deleteSyncCategory() \(data)")
+        os_log(.info, log: Log.sync, "deleteSyncCategory() is not implemented")
     }
     
     func deleteSyncSiteSettings(_ data: [String: AnyObject]) {
-        log.warning("not implemented: delete sync site settings \(data)")
+        os_log(.info, log: Log.sync, "deleteSyncSiteSettings() is not implemented")
     }
     
 }
@@ -576,7 +577,7 @@ extension Sync {
 	        
 	        // TODO: Check if parsing not required
 	        guard let serializedData = JSONSerialization.jsObject(withNative: matchedBookmarks as AnyObject, escaped: false) else {
-	            log.error("Critical error: could not serialize data for resolve-sync-records")
+                os_log(.fault, log: Log.sync, "Could not serialize data for resolve-sync-records")
 	            return
 	        }
 	        
@@ -584,7 +585,8 @@ extension Sync {
 	        if recordType == .bookmark {
 	            // Store the last record's timestamp, to know what timestamp to pass in next time if this one does not fail
 	            self.lastFetchedRecordTimestamp = data?.lastFetchedTimestamp
-	            log.info("sync fetched last timestamp \(self.lastFetchedRecordTimestamp ?? 0)")
+                os_log(.debug, log: Log.sync, "sync last fetched timestamp: %d",
+                       self.lastFetchedRecordTimestamp ?? 0)
 	            self.lastFetchWasTrimmed = data?.isTruncated ?? false
 	        }
 	        
@@ -610,8 +612,7 @@ extension Sync {
             syncSeed = "\(seed)"
             
         } else if syncSeed == nil {
-            // Failure
-            log.error("Seed expected.")
+            os_log(.error, log: Log.sync, "Seed expected")
         }
         
         // Device Id
@@ -620,7 +621,7 @@ extension Sync {
             Device.currentDevice()?.deviceId = deviceArray.map { $0.intValue }
             DataController.save(context: Device.currentDevice()?.managedObjectContext)
         } else if Device.currentDevice()?.deviceId == nil {
-            log.error("Device Id expected!")
+            os_log(.error, log: Log.sync, "Device ID expected")
         }
         
     }
@@ -654,7 +655,7 @@ extension Sync: WKScriptMessageHandler {
         
         // JS execution must be on main thread
         
-        log.debug("😎 \(message.name) \(message.body)")
+        os_log(.debug, log: Log.sync, "Sync callback: %s, %s", message.name, String(describing: message.body))
         
         let syncResponse = SyncResponse(object: message.body as? String ?? "")
         guard let messageName = syncResponse.message else {
@@ -683,7 +684,7 @@ extension Sync: WKScriptMessageHandler {
             self.resolvedSyncRecords(syncResponse)
         case "sync-debug":
             let data = JSON(parseJSON: message.body as? String ?? "")
-            log.debug("---- Sync Debug: \(data)")
+            os_log(.debug, log: Log.sync, "sync-debug: %s", String(describing: data))
         case "sync-ready":
             self.isSyncFullyInitialized.syncReady = true
         case "fetch-sync-records":
@@ -703,7 +704,7 @@ extension Sync: WKScriptMessageHandler {
         case "sync-setup-error":
             self.syncSetupError()
         default:
-            log.debug("\(messageName) not handled yet")
+            os_log(.info, log: Log.sync, "%{public}s message is not handled yet", messageName)
         }
         
         self.checkIsSyncReady()

@@ -21,6 +21,8 @@ public struct Log {
     public static let sync = OSLog(subsystem: subsystem, category: "sync")
     public static let networking = OSLog(subsystem: subsystem, category: "networking")
     public static let rewards = OSLog(subsystem: subsystem, category: "rewards")
+    public static let database = OSLog(subsystem: subsystem, category: "database")
+    public static let DAU = OSLog(subsystem: subsystem, category: "dau")
 }
 
 public struct Logger {}

@@ -5,8 +5,6 @@
 import Foundation
 import Shared
 
-private let log = Logger.browserLogger
-
 enum FileType: String { case dat, json, tgz }
 
 enum AdblockerType {

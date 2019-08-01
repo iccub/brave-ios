@@ -4,6 +4,7 @@
 
 import Foundation
 import Shared
+import os.log
 
 /// An empty protocol simply here to force the developer to use a user defaults encodable value via generic constraint
 public protocol UserDefaultsEncodable {}
@@ -171,7 +172,7 @@ extension Preferences {
             }
             userDefaults?.removeObject(forKey: profileKey)
         } else {
-            Logger.browserLogger.info("Could not migrate legacy pref with key: \"\(profileKey)\".")
+            os_log(.debug, log: Log.migration, "Could not migrate legacy pref with key: %s", profileKey)
         }
     }
     

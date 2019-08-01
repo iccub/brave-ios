@@ -5,8 +5,7 @@ import CoreData
 import Foundation
 import Shared
 import Storage
-
-private let log = Logger.browserLogger
+import os.log
 
 public final class Bookmark: NSManagedObject, WebsitePresentable, Syncable, CRUD {
     // Favorite bookmarks are shown only on homepanel as a tile, they are not visible on bookmarks panel.
@@ -598,11 +597,13 @@ extension Bookmark: Comparable {
     private func compare(_ rhs: Bookmark) -> ComparisonResult {
         
         guard let lhsSyncOrder = syncOrder, let rhsSyncOrder = rhs.syncOrder else {
-            log.info("""
-                Wanting to compare bookmark: \(String(describing: displayTitle)) \
-                and \(String(describing: rhs.displayTitle)) but no syncOrder is set \
+            
+            
+            os_log(.info, log: Log.database, """
+                Wanting to compare bookmark: %s \
+                and %s but no syncOrder is set \
                 in at least one of them.
-                """)
+                """, displayTitle ?? "nil", rhs.displayTitle ?? "nil")
             return .orderedSame
         }
         
@@ -641,7 +642,7 @@ extension Bookmark: Frecencyable {
         do {
             return try context.fetch(fetchRequest)
         } catch {
-            log.error(error)
+            os_log(.error, log: Log.database, "frecency fetch error: %{public}s", error.localizedDescription)
         }
         return [Bookmark]()
     }

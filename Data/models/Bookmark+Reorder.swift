@@ -7,8 +7,7 @@ import CoreData
 import Foundation
 import Shared
 import Storage
-
-private let log = Logger.browserLogger
+import os.log
 
 extension Bookmark {
     /// Reordering bookmarks has two steps:
@@ -23,7 +22,7 @@ extension Bookmark {
         let src = frc.object(at: sourceIndexPath)
         
         if dest === src {
-            log.error("Source and destination bookmarks are the same!")
+            os_log(.error, log: Log.database, "Source and destination bookmarks are the same")
             return
         }
         
@@ -32,7 +31,7 @@ extension Bookmark {
         // in a safely manner.
         guard let data = getReorderData(fromFrc: frc, sourceIndexPath: sourceIndexPath,
                                         destinationIndexPath: destinationIndexPath) else {
-                                            log.error("""
+                                            os_log(.error, log: Log.database, """
                 Failed to receive enough data from FetchedResultsController \
                 to perform bookmark reordering.
                 """)
@@ -50,7 +49,8 @@ extension Bookmark {
             // and the destination bookmark is placed after the source Bookmark.
             guard let srcBookmark = context.bookmark(with: src.objectID),
                 let destBookmark = context.bookmark(with: dest.objectID) else {
-                    log.error("Could not retrieve source or destination bookmark on background context.")
+                    os_log(.error, log: Log.database,
+                           "Could not retrieve source or destination bookmark on background context.")
                     return
             }
             
@@ -65,7 +65,7 @@ extension Bookmark {
             // syncOrder should be always set. Even if Sync is not initiated, we use
             // defualt local ordering starting with syncOrder = 0.0.1, 0.0.2 and so on.
             guard let destinationBookmarkSyncOrder = destBookmark.syncOrder else {
-                log.error("syncOrder of destination bookmark is nil.")
+                os_log(.error, log: Log.database, "syncOrder of destination bookmark is nil.")
                 return
             }
             
@@ -78,7 +78,7 @@ extension Bookmark {
                 nextOrder = destinationBookmarkSyncOrder
                 if !toTheTop {
                     guard let previousSyncOrder = nextOrPreviousBookmark?.syncOrder else {
-                        log.error("syncOrder of the previous bookmark is nil.")
+                        os_log(.error, log: Log.database, "syncOrder of the previous bookmark is nil.")
                         return
                     }
                     previousOrder = previousSyncOrder
@@ -88,7 +88,7 @@ extension Bookmark {
                 previousOrder = destinationBookmarkSyncOrder
                 if !toTheBottom {
                     guard let nextSyncOrder = nextOrPreviousBookmark?.syncOrder else {
-                        log.error("syncOrder of the next bookmark is nil.")
+                        os_log(.error, log: Log.database, "syncOrder of the next bookmark is nil.")
                         return
                     }
                     nextOrder = nextSyncOrder
@@ -96,7 +96,7 @@ extension Bookmark {
             }
             
             guard let updatedSyncOrder = Sync.shared.getBookmarkOrder(previousOrder: previousOrder, nextOrder: nextOrder) else {
-                log.error("updated syncOrder from the javascript method was nil")
+                os_log(.error, log: Log.database, "updated syncOrder from the javascript method was nil")
                 return
             }
             
@@ -133,7 +133,7 @@ extension Bookmark {
         var data: FrcReorderData?
         
         guard let count = frc.fetchedObjects?.count else {
-            log.error("frc.fetchedObject is nil")
+            os_log(.error, log: Log.database, "frc.fetchedObject is nil")
             return nil
         }
         

@@ -4,8 +4,7 @@ import UIKit
 import CoreData
 import Shared
 import XCGLogger
-
-private let log = Logger.browserLogger
+import os.log
 
 /// A helper structure for `DataController.perform()` method
 /// to decide whether a new or existing context should be used
@@ -56,7 +55,8 @@ public class DataController: NSObject {
                         assert(!Thread.isMainThread)
                         try backgroundContext.save()
                     } catch {
-                        log.error("performTask save error: \(error)")
+                        os_log(.error, log: Log.database, "performTask save error %{public}s",
+                               error.localizedDescription)
                     }
                 }
             })
@@ -75,12 +75,12 @@ public class DataController: NSObject {
     
     static func save(context: NSManagedObjectContext?) {
         guard let context = context else {
-            log.warning("No context on save")
+            os_log(.debug, log: Log.database, "No context on save")
             return
         }
         
         if context == DataController.viewContext {
-            log.warning("Writing to view context, this should be avoided.")
+            os_log(.debug, log: Log.database, "Writing to view context, this should be avoided.")
         }
         
         context.perform {
@@ -89,6 +89,7 @@ public class DataController: NSObject {
             do {
                 try context.save()
             } catch {
+                os_log(.error, log: Log.database, "Save error: %{public}s", error.localizedDescription)
                 assertionFailure("Error saving DB: \(error)")
             }
         }
@@ -110,9 +111,12 @@ public class DataController: NSObject {
         
         let modelName = "Model"
         guard let modelURL = Bundle(for: DataController.self).url(forResource: modelName, withExtension: "momd") else {
+            os_log(.fault, log: Log.database, "Error loading model from bundle")
             fatalError("Error loading model from bundle")
         }
         guard let mom = NSManagedObjectModel(contentsOf: modelURL) else {
+            os_log(.fault, log: Log.database, "Error initializing managed object model from: %s",
+                   modelURL.absoluteString)
             fatalError("Error initializing managed object model from: \(modelURL)")
         }
         
@@ -140,7 +144,7 @@ public class DataController: NSObject {
     private let storeURL: URL = {
         let urls = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
         guard let docURL = urls.last else {
-            log.error("Could not load url at document directory")
+            os_log(.fault, log: Log.database, "Could not load url at document directory")
             fatalError()
         }
         

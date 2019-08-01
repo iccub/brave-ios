@@ -5,10 +5,9 @@
 import Foundation
 import Deferred
 import Shared
+import os.log
 
 public let ActivityStreamTopSiteCacheSize: Int32 = 16
-
-private let log = Logger.browserLogger
 
 protocol DataObserver {
     var profile: Profile { get }
@@ -64,7 +63,8 @@ class ActivityStreamDataObserver: DataObserver {
         case .ProfileDidFinishSyncing, .PrivateDataClearedHistory:
              refreshIfNeeded(forceHighlights: true, forceTopSites: true)
         default:
-            log.warning("Received unexpected notification \(notification.name)")
+            os_log(.info, log: Log.browser, "Received unexpected notification: %{public}s",
+                   String(describing: notification.name))
         }
     }
 }

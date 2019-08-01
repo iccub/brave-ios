@@ -7,6 +7,7 @@ import FastImageCache
 import Shared
 import WebKit
 import XCGLogger
+import os.log
 
 /// Properties we want to extract from Tab/TabManager and save in TabMO
 public struct SavedTab {
@@ -31,8 +32,6 @@ public struct SavedTab {
         self.historyIndex = historyIndex
     }
 }
-
-private let log = Logger.browserLogger
 
 public final class TabMO: NSManagedObject, CRUD {
     
@@ -116,7 +115,7 @@ public final class TabMO: NSManagedObject, CRUD {
         DataController.perform { context in
             for (i, tabId) in tabIds.enumerated() {
                 guard let managedObject = getInternal(fromId: tabId, context: context) else {
-                    log.error("Error: Tab missing managed object")
+                    os_log(.error, log: Log.database, "Error: Tab missing managed object")
                     continue
                 }
                 managedObject.order = Int16(i)

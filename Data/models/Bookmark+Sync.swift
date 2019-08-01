@@ -7,8 +7,6 @@ import Shared
 import BraveShared
 import JavaScriptCore
 
-private let log = Logger.browserLogger
-
 // Sync related methods for Bookmark model.
 extension Bookmark {
     /// If sync is not used, we still utilize its syncOrder algorithm to determine order of bookmarks.

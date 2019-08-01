@@ -5,8 +5,6 @@ import CoreData
 import Foundation
 import Shared
 
-private let log = Logger.browserLogger
-
 public final class Device: NSManagedObject, Syncable, CRUD {
     
     // Check if this can be nested inside the method

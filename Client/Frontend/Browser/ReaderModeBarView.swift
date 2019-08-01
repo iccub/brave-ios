@@ -7,8 +7,6 @@ import SnapKit
 import Shared
 import XCGLogger
 
-private let log = Logger.browserLogger
-
 enum ReaderModeBarButtonType {
     case settings
 

@@ -6,8 +6,7 @@ import Shared
 import BraveShared
 import SwiftyJSON
 import JavaScriptCore
-
-private let log = Logger.browserLogger
+import os.log
 
 public enum JSResult<Value> {
     case success(Value)
@@ -86,7 +85,7 @@ public class SyncCrypto {
             let words = result.toString().components(separatedBy: " ")
             return words.count == bipWordLength ? .success(words) : .failure(JSValue.unknownError)
         } catch {
-            log.error(error)
+            os_log(.error, log: Log.sync, "Passphrase error %s", error.localizedDescription)
             return .failure(error)
         }
     }
@@ -110,7 +109,7 @@ public class SyncCrypto {
             let bytes = result.toString().components(separatedBy: ",").compactMap { Int($0) }
             return bytes.count == 32 ? .success(bytes) : .failure(JSValue.unknownError)
         } catch {
-            log.error(error)
+            os_log(.error, log: Log.sync, "Bytes from passphrase error %s", error.localizedDescription)
             return .failure(error)
         }
     }

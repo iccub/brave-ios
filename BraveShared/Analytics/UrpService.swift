@@ -5,8 +5,7 @@ import Alamofire
 import SafariServices
 import Shared
 import SwiftyJSON
-
-private let log = Logger.browserLogger
+import os.log
 
 enum UrpError {
     case networkError, downloadIdNotFound, ipNotFound, endpointError
@@ -46,7 +45,7 @@ struct UrpService {
     func referralCodeLookup(completion: @escaping (ReferralData?, UrpError?) -> Void) {
         guard var endPoint = try? host.asURL() else {
             completion(nil, .endpointError)
-            UrpLog.log("Host not a url: \(host)")
+            os_log(.error, log: Log.referrals, "Host %s is not a URL", host)
             return
         }
         endPoint.appendPathComponent("promo/initialize/ua")
@@ -54,8 +53,8 @@ struct UrpService {
         let params = [UrpService.apiKeyParam: apiKey]
 
         sessionManager.urpApiRequest(endPoint: endPoint, params: params) { response in
-            log.debug("Referral code lookup response: \(response)")
-            UrpLog.log("Referral code lookup response: \(response)")
+            os_log(.info, log: Log.referrals, "Referral code lookup response: %s",
+                   String(describing: response))
             let json = JSON(response.data as Any)
 
             let referral = ReferralData(json: json)
@@ -76,7 +75,8 @@ struct UrpService {
         ]
 
         sessionManager.urpApiRequest(endPoint: endPoint, params: params) { response in
-            log.debug("Check if authorized for grant response: \(response)")
+            os_log(.info, log: Log.referrals, "Check if authorized for grant response: %s",
+                   String(describing: response))
             let json = JSON(response.data as Any)
 
             completion(json["finalized"].boolValue, nil)

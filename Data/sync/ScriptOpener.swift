@@ -4,8 +4,7 @@
 
 import Foundation
 import Shared
-
-private let log = Logger.browserLogger
+import os.log
 
 struct ScriptOpener {
     /// Opens a javascript file with a given name. Uses Data framework's bundle by default.
@@ -18,7 +17,7 @@ struct ScriptOpener {
         }
         
         guard let filePath = bundle.path(forResource: name, ofType: "js") else {
-            log.error("Could not find script named: \(name)")
+            os_log(.error, log: Log.filesystem, "Could not find script named: %s", name)
             return nil
         }
         
@@ -26,7 +25,7 @@ struct ScriptOpener {
             let contents = try String(contentsOfFile: filePath, encoding: String.Encoding.utf8)
             return contents
         } catch {
-            log.error("Could not find or parse script named: \(name)")
+            os_log(.error, log: Log.filesystem, "Could not find or parse script named: %s", name)
             return nil
         }
     }
