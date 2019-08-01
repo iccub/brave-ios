@@ -51,8 +51,7 @@ class NetworkManager {
         
         session.dataRequest(with: request) { data, response, error -> Void in
             if let err = error {
-                os_log(.error, log: Log.networking, "data request error: %s",
-                       error?.localizedDescription ?? "")
+                os_log(.error, log: Log.networking, "data request error: %s", err.localizedDescription)
                 if let retryTimeout = retryTimeout {
                     DispatchQueue.main.asyncAfter(deadline: .now() + retryTimeout) {
                         self.downloadResource(with: url, resourceType: resourceType, retryTimeout: retryTimeout).upon { resource in
@@ -70,7 +69,7 @@ class NetworkManager {
             
             switch response.statusCode {
             case 400...499:
-                os_log(.error, log: Log.networking, "Download failed, status code: %{public}s, url: %s",
+                os_log(.error, log: Log.networking, "Download failed, status code: %{public}d, url: %s",
                        response.statusCode, response.url?.absoluteString ?? "")
             case fileNotModifiedStatusCode:
                 os_log(.info, log: Log.networking, "File was not modified")

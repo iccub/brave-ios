@@ -72,7 +72,8 @@ class Authenticator {
                     return nil
                 }
                 loginsProvider.removeLoginsWithGUIDs(malformedGUIDs).upon {
-                    os_log(.debug, log: Log.browser, "Removed malformed logins. Success: %s ", $0.isSuccess)
+                    os_log(.debug, log: Log.browser, "Removed malformed logins. Success: %s ",
+                           String(describing: $0.isSuccess))
                 }
             }
 

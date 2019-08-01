@@ -212,7 +212,7 @@ class SearchEngines {
             try data.write(to: URL(fileURLWithPath: customEngineFilePath()))
         } catch {
             os_log(.error, log: Log.browser, "Failed to save custom engines %{public}s, %{public}s",
-                   customEngines, error.localizedDescription)
+                   String(describing: customEngines), error.localizedDescription)
         }
     }
 

@@ -496,7 +496,7 @@ class TabManager: NSObject {
             urls = backListMap + [currentItemString] + forwardListMap
             currentPage = -forwardList.count
             
-            os_log(.debug, log: Log.browser, "tab urls: %s", urls)
+            os_log(.debug, log: Log.browser, "tab urls: %s", String(describing: urls))
         }
         if let id = TabMO.get(fromId: tab.id)?.syncUUID {
             let displayTitle = tab.displayTitle

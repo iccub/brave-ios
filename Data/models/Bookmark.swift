@@ -598,7 +598,6 @@ extension Bookmark: Comparable {
         
         guard let lhsSyncOrder = syncOrder, let rhsSyncOrder = rhs.syncOrder else {
             
-            
             os_log(.info, log: Log.database, """
                 Wanting to compare bookmark: %s \
                 and %s but no syncOrder is set \

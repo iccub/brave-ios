@@ -55,7 +55,7 @@ public class UserReferralProgram {
                     do {
                         try Preferences.URP.customHeaderData.value = NSKeyedArchiver.archivedData(withRootObject: headers, requiringSecureCoding: false)
                     } catch {
-                        os_log(.error, log: Log.referrals, "Failed to save URP custom header data %{public}s with error: %{public}s", headers, error.localizedDescription)
+                        os_log(.error, log: Log.referrals, "Failed to save URP custom header data %{public}s with error: %{public}s", String(describing: headers), error.localizedDescription)
                     }
                 }
                 
@@ -187,7 +187,7 @@ public class UserReferralProgram {
                 try Preferences.URP.customHeaderData.value = NSKeyedArchiver.archivedData(withRootObject: headers, requiringSecureCoding: false)
             } catch {
                 os_log(.error, log: Log.referrals, "Failed to save URP custom header data %{public}s, %{public}s",
-                       headers, error.localizedDescription)
+                       String(describing: headers), error.localizedDescription)
             }
             result.fill(headers)
         }
