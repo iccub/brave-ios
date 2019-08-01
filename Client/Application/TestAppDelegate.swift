@@ -5,8 +5,7 @@
 import Foundation
 import Shared
 import XCGLogger
-
-private let log = Logger.browserLogger
+import os.log
 
 // swiftlint:disable force_try force_cast
 
@@ -44,7 +43,7 @@ class TestAppDelegate: AppDelegate {
 
         if launchArguments.contains(LaunchArguments.ClearProfile) {
             // Use a clean profile for each test session.
-            log.debug("Deleting all files in 'Documents' directory to clear the profile")
+            os_log(.debug, log: Log.tests, "Deleting all files in 'Documents' directory to clear the profile")
             profile = BrowserProfile(localName: "testProfile", clear: true)
         } else {
             profile = BrowserProfile(localName: "testProfile")
@@ -72,7 +71,7 @@ class TestAppDelegate: AppDelegate {
      Use this to reset the application between tests.
      **/
     func resetApplication() {
-        log.debug("Wiping everything for a clean start.")
+        os_log(.debug, log: Log.tests, "Wiping everything for a clean start.")
 
         // Clear image cache
         WebImageCacheManager.shared.clearMemoryCache()
@@ -99,7 +98,7 @@ class TestAppDelegate: AppDelegate {
             do {
                 try manager.removeItem(at: documents.appendingPathComponent(content))
             } catch {
-                log.debug("Couldn't delete some document contents.")
+                os_log(.debug, log: Log.tests, "Couldn't delete some document contents.")
             }
         }
     }

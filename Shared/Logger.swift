@@ -4,6 +4,17 @@
 
 import Foundation
 import XCGLogger
+import os.log
+
+private let subsystem = "com.brave.logs"
+
+public struct Log {
+    public static let browser = OSLog(subsystem: subsystem, category: "browser")
+    public static let tests = OSLog(subsystem: subsystem, category: "tests")
+    public static let migration = OSLog(subsystem: subsystem, category: "migration")
+    public static let referrals = OSLog(subsystem: subsystem, category: "URP")
+    public static let webAuthentication = OSLog(subsystem: subsystem, category: "webauth")
+}
 
 public struct Logger {}
 

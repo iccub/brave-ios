@@ -7,8 +7,7 @@ import Shared
 import BraveShared
 import SwiftKeychainWrapper
 import Data
-
-private let log = Logger.browserLogger
+import os.log
 
 class Migration {
     static func launchMigrations(keyPrefix: String) {
@@ -66,7 +65,7 @@ fileprivate extension Preferences {
             do {
                 try FileManager.default.setAttributes([.posixPermissions: NSNumber(value: 0o755 as Int16)], ofItemAtPath: $0)
             } catch {
-                log.error("Failed setting the directory attributes for \($0)")
+                os_log(.error, log: Log.migration, "Failed setting the directory attributes for %s", $0)
             }
         }
         

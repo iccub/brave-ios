@@ -6,11 +6,9 @@ import Foundation
 import Shared
 import Deferred
 import WebKit
-
-private let log = Logger.browserLogger
+import os.log
 
 public class UserReferralProgram {
-    
     /// Domains must match server HTTP header ones _exactly_
     private static let urpCookieOnlyDomains = ["coinbase.com"]
     public static let shared = UserReferralProgram()
@@ -32,25 +30,23 @@ public class UserReferralProgram {
         let host = AppConstants.BuildChannel == .developer ? HostUrl.staging : HostUrl.prod
         
         guard let apiKey = getPlistString(for: UserReferralProgram.apiKeyPlistKey)?.trimmingCharacters(in: .whitespacesAndNewlines) else {
-                log.error("Urp init error, failed to get values from Brave.plist.")
+                os_log(.error, log: Log.referrals, "Urp init error, failed to get values from Brave.plist.")
                 return nil
         }
         
         guard let urpService = UrpService(host: host, apiKey: apiKey) else { return nil }
-        
-        UrpLog.log("URP init, host: \(host)")
+        os_log(.info, log: Log.referrals, "URP initialization, host: %s", host)
         
         self.service = urpService
     }
     
     /// Looks for referral and returns its landing page if possible.
     public func referralLookup(completion: @escaping (String?) -> Void) {
-        UrpLog.log("first run referral lookup")
+        os_log(.info, log: Log.referrals, "First run, doing referral lookup")
         
         service.referralCodeLookup { referral, _ in
             guard let ref = referral else {
-                log.info("No referral code found")
-                UrpLog.log("No referral code found")
+                os_log(.default, log: Log.referrals, "No referral code found")
                 return
             }
             
@@ -59,12 +55,13 @@ public class UserReferralProgram {
                     do {
                         try Preferences.URP.customHeaderData.value = NSKeyedArchiver.archivedData(withRootObject: headers, requiringSecureCoding: false)
                     } catch {
-                        log.error("Failed to save URP custom header data \(headers) with error: \(error.localizedDescription)")
+                        os_log(.error, log: Log.referrals, "Failed to save URP custom header data %{public}s with error: %{public}s", headers, error.localizedDescription)
                     }
                 }
                 
                 completion(ref.offerPage)
-                UrpLog.log("Extended referral code found, opening landing page: \(ref.offerPage ?? "404")")
+                os_log(.default, log: Log.referrals, "Extended referral code found, opening landing page %{public}s",
+                       ref.offerPage ?? "404")
                 // We do not want to persist referral data for extended URPs
                 return
             }
@@ -72,7 +69,8 @@ public class UserReferralProgram {
             Preferences.URP.downloadId.value = ref.downloadId
             Preferences.URP.referralCode.value = ref.referralCode
             
-            UrpLog.log("Found referral: downloadId: \(ref.downloadId), code: \(ref.referralCode)")
+            os_log(.default, log: Log.referrals, "Found referral: downloadId=%{public}s, code%{public}s",
+                   ref.downloadId, ref.referralCode)
             // In case of network errors or getting `isFinalized = false`, we retry the api call.
             self.initRetryPingConnection(numberOfTimes: 30)
             
@@ -101,57 +99,54 @@ public class UserReferralProgram {
         }
         
         guard let downloadId = Preferences.URP.downloadId.value else {
-            log.info("Could not retrieve download id model from preferences.")
-            UrpLog.log("Update ping, no download id found.")
+            os_log(.default, log: Log.referrals, "Update ping, no download id found.")
             return
         }
         
         guard let checkDate = Preferences.URP.nextCheckDate.value else {
-            log.error("Could not retrieve check date from preferences.")
+            os_log(.error, log: Log.referrals, "Could not retrieve check date from preferences.")
             return
         }
         
         let todayInSeconds = Date().timeIntervalSince1970
         
         if todayInSeconds <= checkDate {
-            log.debug("Not enough time has passed for referral ping.")
-            UrpLog.log("Not enough time has passed for referral ping.")
+            os_log(.default, log: Log.referrals, "Not enough time has passed for referral ping.")
             return
         }
         
         UrpLog.log("Update ping")
         service.checkIfAuthorizedForGrant(with: downloadId) { initialized, error in
             guard let counter = Preferences.URP.retryCountdown.value else {
-                log.error("Could not retrieve retry countdown from preferences.")
+                os_log(.error, log: Log.referrals, "Could not retrieve retry countdown from preferences.")
                 return
             }
             
             var shouldRemoveData = false
             
             if error == .downloadIdNotFound {
-                UrpLog.log("Download id not found on server.")
+                os_log(.default, log: Log.referrals, "Download id not found on server.")
                 shouldRemoveData = true
             }
             
             if initialized == true {
-                UrpLog.log("Got initialized = true from server.")
+                os_log(.default, log: Log.referrals, "Got initialized = true from server.")
                 shouldRemoveData = true
             }
             
             // Last retry attempt
             if counter <= 1 {
-                UrpLog.log("Last retry and failed to get data from server.")
+                os_log(.default, log: Log.referrals, "Last retry and failed to get data from server.")
                 shouldRemoveData = true
             }
             
             if shouldRemoveData {
-                UrpLog.log("Removing all referral data from device")
-                
+                os_log(.default, log: Log.referrals, "Removing all referral data from device")
                 Preferences.URP.downloadId.value = nil
                 Preferences.URP.nextCheckDate.value = nil
                 Preferences.URP.retryCountdown.value = nil
             } else {
-                UrpLog.log("Network error or isFinalized returned false, decrementing retry counter and trying again next time.")
+                os_log(.default, log: Log.referrals, "Network error or isFinalized returned false, decrementing retry counter and trying again next time.")
                 // Decrement counter, next retry happens on next day
                 Preferences.URP.retryCountdown.value = counter - 1
                 Preferences.URP.nextCheckDate.value = checkDate + 1.days
@@ -165,7 +160,7 @@ public class UserReferralProgram {
             Date().timeIntervalSince1970 >= referralCodeDeleteDate {
             Preferences.URP.referralCode.value = nil
             Preferences.URP.referralCodeDeleteDate.value = nil
-            UrpLog.log("Enough time has passed, removing referral code data")
+            os_log(.default, log: Log.referrals, "Enough time has passed, removing referral code data")
             return nil
         } else if let referralCode = Preferences.URP.referralCode.value {
             // Appending ref code to dau ping if user used installed the app via user referral program.
@@ -191,7 +186,8 @@ public class UserReferralProgram {
             do {
                 try Preferences.URP.customHeaderData.value = NSKeyedArchiver.archivedData(withRootObject: headers, requiringSecureCoding: false)
             } catch {
-                log.error("Failed to save URP custom header data \(headers) with error: \(error.localizedDescription)")
+                os_log(.error, log: Log.referrals, "Failed to save URP custom header data %{public}s, %{public}s",
+                       headers, error.localizedDescription)
             }
             result.fill(headers)
         }
@@ -204,9 +200,11 @@ public class UserReferralProgram {
         guard let customHeadersAsData = Preferences.URP.customHeaderData.value else { return nil }
         
         do {
-            return try NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(customHeadersAsData) as? [CustomHeaderData]
+            return try NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(customHeadersAsData)
+                as? [CustomHeaderData]
         } catch {
-            log.error("Failed to unwrap custom headers with error: \(error.localizedDescription)")
+            os_log(.error, log: Log.referrals, "Failed to unwrap custom headers, %{public}s",
+                   error.localizedDescription)
         }
         return nil
     }

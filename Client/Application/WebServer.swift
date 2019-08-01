@@ -5,10 +5,9 @@
 import Foundation
 import GCDWebServers
 import Shared
+import os.log
 
 class WebServer {
-    private let log = Logger.browserLogger
-
     static let WebServerSharedInstance = WebServer()
 
     class var sharedInstance: WebServer {
@@ -72,7 +71,8 @@ class WebServer {
             if let resource = NSURL(string: path)?.lastPathComponent {
                 server.addGETHandler(forPath: "/\(module)/\(resource)", filePath: path as String, isAttachment: false, cacheAge: UInt.max, allowRangeRequests: true)
             } else {
-                log.warning("Unable to locate resource at path: '\(path)'")
+                os_log(.error, log: Log.browser, "Unable to locate resource at path: %s", path)
+                
             }
         }
     }

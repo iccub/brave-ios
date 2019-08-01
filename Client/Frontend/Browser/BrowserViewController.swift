@@ -19,8 +19,7 @@ import BraveShared
 import SwiftKeychainWrapper
 import BraveRewardsUI
 import BraveRewards
-
-private let log = Logger.browserLogger
+import os.log
 
 private let KVOs: [KVOConstants] = [
     .estimatedProgress,
@@ -2706,7 +2705,8 @@ extension BrowserViewController {
         _ = Try(withTry: {
             inputAssistant.trailingBarButtonGroups.last?.barButtonItems.append(item)
         }) { exception in
-            log.error("Failed adding custom search button to input assistant: \(String(describing: exception))")
+//            log.error("Failed adding custom search button to input assistant: \(String(describing: exception))")
+            os_log(.error, log: Log.browser, "Failed adding custom search button to input assistant: %{public}s", String(describing: exception))
         }
     }
 
@@ -3000,7 +3000,7 @@ extension BrowserViewController: PreferencesObserver {
                 tabManager.reloadSelectedTab()
             }
         default:
-            log.debug("Received a preference change for an unknown key: \(key) on \(type(of: self))")
+            os_log(.debug, log: Log.browser, "Received a preference change for an unknown key: %{public}s", key)
             break
         }
     }

@@ -14,8 +14,7 @@ import CoreSpotlight
 import UserNotifications
 import BraveShared
 import Data
-
-private let log = Logger.browserLogger
+import os.log
 
 let LatestAppVersionProfileKey = "latestAppVersion"
 private let InitialPingSentKey = "initialPingSent"
@@ -87,7 +86,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIViewControllerRestorati
     }
 
     @discardableResult fileprivate func startApplication(_ application: UIApplication, withLaunchOptions launchOptions: [AnyHashable: Any]?) -> Bool {
-        log.info("startApplication begin")
+        os_log(.debug, log: Log.browser, "startApplication begin")
         
         // Set the Firefox UA for browsing.
         setUserAgent()
@@ -118,7 +117,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIViewControllerRestorati
         do {
             imageStore = try DiskImageStore(files: profile.files, namespace: "TabManagerScreenshots", quality: UIConstants.ScreenshotQuality)
         } catch {
-            log.error("Failed to create an image store for files: \(profile.files) and namespace: \"TabManagerScreenshots\": \(error.localizedDescription)")
+            os_log(.error, log: Log.browser, "Failed to create an image store: %{public}s",
+                   error.localizedDescription)
             assertionFailure()
         }
         
@@ -155,7 +155,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIViewControllerRestorati
         self.updateAuthenticationInfo()
         SystemUtils.onFirstRun()
 
-        log.info("startApplication end")
+        os_log(.debug, log: Log.browser, "startApplication end")
         return true
     }
 
@@ -255,9 +255,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIViewControllerRestorati
             } else {
                 urp.pingIfEnoughTimePassed()
             }
-        } else {
-            log.error("Failed to initialize user referral program")
-            UrpLog.log("Failed to initialize user referral program")
         }
         
         AdblockResourceDownloader.shared.startLoading()

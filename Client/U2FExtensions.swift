@@ -5,6 +5,7 @@
 import Data
 import Shared
 import WebKit
+import os.log
 
 private struct FIDORegisterRequest: Codable {
     var challenge: String
@@ -37,7 +38,6 @@ private enum U2FErrorCodes: Int {
     case ok = 1, other_error, bad_request, configuration_unsupported, device_ineligible, timeout
 }
 
-private let log = Logger.browserLogger
 private let defaultErrorCode = U2FErrorCodes.ok.rawValue
 private let authSuccess = -1
 
@@ -250,7 +250,7 @@ class U2FExtensions: NSObject {
             
             fido2Service.execute(makeCredentialRequest) { [weak self] response, error in
                 guard let self = self else {
-                    log.error(U2FErrorMessages.ErrorRegistration.rawValue)
+                    os_log(.error, log: Log.webAuthentication, "%{public}s", U2FErrorMessages.ErrorRegistration.rawValue)
                     return
                 }
                 guard error == nil else {
@@ -293,7 +293,7 @@ class U2FExtensions: NSObject {
             self.tab?.webView?.evaluateJavaScript("navigator.credentials.postCreate('\(handle)', \(true), '\(credentialIdString)', '\(attestationString)', '\(clientDataJSON)', '', '')", completionHandler: { _, error in
                 if error != nil {
                     let errorDescription = error?.localizedDescription ?? U2FErrorMessages.ErrorRegistration.rawValue
-                    log.error(errorDescription)
+                    os_log(.error, log: Log.webAuthentication, "%{public}s", errorDescription)
                 }
         }) }
     }
@@ -304,14 +304,14 @@ class U2FExtensions: NSObject {
             self.tab?.webView?.evaluateJavaScript("navigator.credentials.postCreate('\(handle)', \(true),'', '', '', '\(errorName)', '\(errorDescription)')", completionHandler: { _, error in
                 if error != nil {
                     let errorDescription = error?.localizedDescription ?? U2FErrorMessages.ErrorRegistration.rawValue
-                    log.error(errorDescription)
+                    os_log(.error, log: Log.webAuthentication, "%{public}s", errorDescription)
                 }
         }) }
     }
     
     private func cleanupFIDO2Registration(handle: Int) {
         guard let index = fido2RegHandles.firstIndex(of: handle) else {
-            log.error(U2FErrorMessages.ErrorRegistration)
+            os_log(.error, log: Log.webAuthentication, "%{public}s", U2FErrorMessages.ErrorRegistration.rawValue)
             return
         }
         fido2RegHandles.remove(at: index)
@@ -391,7 +391,8 @@ class U2FExtensions: NSObject {
             
             fido2Service.execute(getAssertionRequest) { [weak self] response, error in
                 guard let self = self else {
-                    log.error(U2FErrorMessages.ErrorAuthentication.rawValue)
+                    os_log(.error, log: Log.webAuthentication, "%{public}s",
+                           U2FErrorMessages.ErrorAuthentication.rawValue)
                     return
                 }
                 guard error == nil else {
@@ -428,7 +429,7 @@ class U2FExtensions: NSObject {
             self.tab?.webView?.evaluateJavaScript("navigator.credentials.postGet('\(handle)', \(true), '\(requestId)', '\(authenticatorData)', '\(clientDataJSONString)', '\(sig)', '')", completionHandler: { _, error in
                 if error != nil {
                     let errorDescription = error?.localizedDescription ?? U2FErrorMessages.ErrorAuthentication.rawValue
-                    log.error(errorDescription)
+                    os_log(.error, log: Log.webAuthentication, "%{public}s", errorDescription)
                 }
         }) }
     }
@@ -439,14 +440,14 @@ class U2FExtensions: NSObject {
             self.tab?.webView?.evaluateJavaScript("navigator.credentials.postGet('\(handle)', \(true), '', '', '', '', '\(errorName)', '\(errorDescription)')", completionHandler: { _, error in
                 if error != nil {
                     let errorDescription = error?.localizedDescription ?? U2FErrorMessages.ErrorAuthentication.rawValue
-                    log.error(errorDescription)
+                    os_log(.error, log: Log.webAuthentication, "%{public}s", errorDescription)
                 }
         }) }
     }
     
     private func cleanupFIDO2Authentication(handle: Int) {
         guard let index = fido2AuthHandles.firstIndex(of: handle) else {
-            log.error(U2FErrorMessages.ErrorRegistration)
+            os_log(.error, log: Log.webAuthentication, "%{public}s", U2FErrorMessages.ErrorRegistration.rawValue)
             return
         }
         fido2AuthHandles.remove(at: index)
@@ -488,7 +489,7 @@ class U2FExtensions: NSObject {
         
         u2fservice.execute(registerRequest) { [weak self] response, error in
             guard let self = self else {
-                log.error(U2FErrorMessages.Error.rawValue)
+                os_log(.error, log: Log.webAuthentication, "%{public}s", U2FErrorMessages.Error.rawValue)
                 return
             }
             
@@ -512,7 +513,7 @@ class U2FExtensions: NSObject {
                     self.tab?.webView?.evaluateJavaScript("u2f.postLowLevelRegister(\(requestId), \(true), '\(request.version)', '\(registrationData)', '\(clientData)', \(defaultErrorCode), '')", completionHandler: { _, error in
                         if error != nil {
                             let errorDescription = error?.localizedDescription ?? U2FErrorMessages.ErrorRegistration.rawValue
-                            log.error(errorDescription)
+                            os_log(.error, log: Log.webAuthentication, "%{public}s", errorDescription)
                         }
                 }) }
                 return
@@ -522,7 +523,7 @@ class U2FExtensions: NSObject {
                 self.tab?.webView?.evaluateJavaScript("u2f.postRegister('\(handle)', \(true), '\(request.version)', '\(registrationData)', '\(clientData)', \(defaultErrorCode), '')", completionHandler: { _, error in
                     if error != nil {
                         let errorDescription = error?.localizedDescription ?? U2FErrorMessages.ErrorRegistration.rawValue
-                        log.error(errorDescription)
+                        os_log(.error, log: Log.webAuthentication, "%{public}s", errorDescription)
                     }
             }) }
         }
@@ -535,7 +536,7 @@ class U2FExtensions: NSObject {
                 self.tab?.webView?.evaluateJavaScript("u2f.postLowLevelRegister(\(requestId), \(true), '', '', '', \(errorCode.rawValue), '\(errorMessage)')", completionHandler: { _, error in
                     if error != nil {
                         let errorDescription = error?.localizedDescription ?? U2FErrorMessages.ErrorRegistration.rawValue
-                        log.error(errorDescription)
+                        os_log(.error, log: Log.webAuthentication, "%{public}s", errorDescription)
                     }
             }) }
             return
@@ -545,14 +546,15 @@ class U2FExtensions: NSObject {
             self.tab?.webView?.evaluateJavaScript("u2f.postRegister('\(handle)', \(true), '', '', '', \(errorCode.rawValue), '\(errorMessage)')", completionHandler: { _, error in
                 if error != nil {
                     let errorDescription = error?.localizedDescription ?? U2FErrorMessages.ErrorRegistration.rawValue
-                    log.error(errorDescription)
+                    os_log(.error, log: Log.webAuthentication, "%{public}s", errorDescription)
                 }
             }) }
     }
     
     private func cleanupFIDORegistration(handle: Int) {
         guard let index = fidoRegHandles.firstIndex(of: handle) else {
-            log.error(U2FErrorMessages.ErrorRegistration)
+            os_log(.error, log: Log.webAuthentication, "%{public}s",
+                   U2FErrorMessages.ErrorRegistration.rawValue)
             return
         }
         fidoRegHandles.remove(at: index)
@@ -589,7 +591,8 @@ class U2FExtensions: NSObject {
             }
             
             guard var count = self.fidoRequests[handle] else {
-                log.error(U2FErrorMessages.ErrorAuthentication.rawValue)
+                os_log(.error, log: Log.webAuthentication, "%{public}s",
+                       U2FErrorMessages.ErrorAuthentication.rawValue)
                 return
             }
             
@@ -600,7 +603,8 @@ class U2FExtensions: NSObject {
             
             u2fservice.execute(signRequest) { [weak self] response, error in
                 guard let self = self else {
-                    log.error(U2FErrorMessages.ErrorAuthentication.rawValue)
+                    os_log(.error, log: Log.webAuthentication, "%{public}s",
+                           U2FErrorMessages.ErrorAuthentication.rawValue)
                     return
                 }
                 
@@ -635,7 +639,7 @@ class U2FExtensions: NSObject {
                         self.tab?.webView?.evaluateJavaScript("u2f.postLowLevelSign(\(requestId), \(true), '\(keyHandle)', '\(signature)', '\(clientData)', \(defaultErrorCode), '')", completionHandler: { _, error in
                             if error != nil {
                                 let errorDescription = error?.localizedDescription ?? U2FErrorMessages.ErrorAuthentication.rawValue
-                                log.error(errorDescription)
+                                os_log(.error, log: Log.webAuthentication, "%{public}s", errorDescription)
                             }
                     }) }
                     return
@@ -645,7 +649,7 @@ class U2FExtensions: NSObject {
                     self.tab?.webView?.evaluateJavaScript("u2f.postSign('\(handle)', \(true), '\(keyHandle)', '\(signature)', '\(clientData)', \(defaultErrorCode), '')", completionHandler: { _, error in
                         if error != nil {
                             let errorDescription = error?.localizedDescription ?? U2FErrorMessages.ErrorAuthentication.rawValue
-                            log.error(errorDescription)
+                            os_log(.error, log: Log.webAuthentication, "%{public}s", errorDescription)
                         }
                 }) }
             }
@@ -660,7 +664,7 @@ class U2FExtensions: NSObject {
                 self.tab?.webView?.evaluateJavaScript("u2f.postLowLevelSign(\(requestId), \(true), '', '', '', \(errorCode.rawValue), '\(errorMessage)')", completionHandler: { _, error in
                     if error != nil {
                         let errorDescription = error?.localizedDescription ?? U2FErrorMessages.ErrorAuthentication.rawValue
-                        log.error(errorDescription)
+                        os_log(.error, log: Log.webAuthentication, "%{public}s", errorDescription)
                     }
             }) }
             return
@@ -670,14 +674,15 @@ class U2FExtensions: NSObject {
             self.tab?.webView?.evaluateJavaScript("u2f.postSign('\(handle)', \(true), '', '', '', \(errorCode.rawValue), '\(errorMessage)')", completionHandler: { _, error in
                 if error != nil {
                     let errorDescription = error?.localizedDescription ?? U2FErrorMessages.ErrorAuthentication.rawValue
-                    log.error(errorDescription)
+                    os_log(.error, log: Log.webAuthentication, "%{public}s", errorDescription)
                 }
         }) }
     }
     
     private func cleanupFIDOAuthentication(handle: Int) {
         guard let index = fidoSignHandles.firstIndex(of: handle) else {
-            log.error(U2FErrorMessages.ErrorRegistration)
+            os_log(.error, log: Log.webAuthentication, "%{public}s",
+                   U2FErrorMessages.ErrorRegistration.rawValue)
             return
         }
         fidoSignHandles.remove(at: index)
@@ -694,7 +699,8 @@ class U2FExtensions: NSObject {
         if sessionState == .open { // The key session is ready to be used.
             if !fido2RegHandles.isEmpty {
                 guard let handle = fido2RegHandles.first else {
-                    log.error(U2FErrorMessages.ErrorRegistration)
+                    os_log(.error, log: Log.webAuthentication, "%{public}s",
+                           U2FErrorMessages.ErrorRegistration.rawValue)
                     return
                 }
                 guard let request = fido2RegisterRequest[handle] else {
@@ -706,7 +712,8 @@ class U2FExtensions: NSObject {
             
             if !fidoRegHandles.isEmpty {
                 guard let handle = fidoRegHandles.first else {
-                    log.error(U2FErrorMessages.ErrorRegistration)
+                    os_log(.error, log: Log.webAuthentication, "%{public}s",
+                           U2FErrorMessages.ErrorRegistration.rawValue)
                     return
                 }
                 guard let request = fidoRegisterRequest[handle] else {
@@ -718,7 +725,8 @@ class U2FExtensions: NSObject {
         
             if !fido2AuthHandles.isEmpty {
                 guard let handle = fido2AuthHandles.first else {
-                    log.error(U2FErrorMessages.ErrorAuthentication)
+                    os_log(.error, log: Log.webAuthentication, "%{public}s",
+                           U2FErrorMessages.ErrorAuthentication.rawValue)
                     return
                 }
                 guard let request = fido2AuthRequest[handle] else {
@@ -730,7 +738,8 @@ class U2FExtensions: NSObject {
         
             if !fidoSignHandles.isEmpty {
                 guard let handle = fidoSignHandles.first else {
-                    log.error(U2FErrorMessages.ErrorAuthentication)
+                    os_log(.error, log: Log.webAuthentication, "%{public}s",
+                           U2FErrorMessages.ErrorAuthentication.rawValue)
                     return
                 }
                 guard let keys = fidoSignRequests[handle] else {
@@ -757,7 +766,7 @@ extension U2FExtensions: TabContentScript {
         if message.name == "U2F", let body = message.body as? NSDictionary {
             
             guard let name = body["name"] as? String, let handle = body["handle"] as? Int else {
-                log.error(U2FErrorMessages.Error)
+                os_log(.error, log: Log.webAuthentication, "%{public}s", U2FErrorMessages.Error.rawValue)
                 return
             }
             
@@ -829,7 +838,7 @@ extension U2FExtensions: TabContentScript {
                     // Low Level FIDO U2F API use message port for interaction
                     // https://fidoalliance.org/specs/fido-u2f-v1.0-nfc-bt-amendment-20150514/fido-u2f-javascript-api.html#low-level-messageport-api
                     guard let data = body["data"] as? String else {
-                        log.error(U2FErrorMessages.Error.rawValue)
+                        os_log(.error, log: Log.webAuthentication, "%{public}s", U2FErrorMessages.Error.rawValue)
                         return
                     }
                     
@@ -840,7 +849,7 @@ extension U2FExtensions: TabContentScript {
                         if lowLevelRequest.type == registerRequest {
                             let request = try decoder.decode(FIDOLowLevelRegisterRequests.self, from: jsonData)
                             guard let registerRequests = request.registerRequests else {
-                                log.error(Strings.U2FRegistrationError)
+                                os_log(.error, log: Log.webAuthentication, "%{public}s", Strings.U2FRegistrationError)
                                 return
                             }
                             requestFIDORegistration(handle: handle, requests: registerRequests, id: lowLevelRequest.requestId)
@@ -848,16 +857,17 @@ extension U2FExtensions: TabContentScript {
                         if lowLevelRequest.type == signRequest {
                             let request = try decoder.decode(FIDOLowLevelSignRequests.self, from: jsonData)
                             guard let signRequests = request.signRequests else {
-                                log.error(Strings.U2FAuthenticationError)
+                                os_log(.error, log: Log.webAuthentication, "%{public}s",
+                                       Strings.U2FAuthenticationError)
                                 return
                             }
                             requestFIDOAuthentication(handle: handle, keys: signRequests, id: lowLevelRequest.requestId)
                         }
                     } catch {
-                        log.error(error.localizedDescription)
+                        os_log(.error, log: Log.webAuthentication, "%{public}s", error.localizedDescription)
                     }
                 default:
-                    log.error(U2FErrorMessages.Error)
+                    os_log(.error, log: Log.webAuthentication, "%{public}s", U2FErrorMessages.Error.rawValue)
             }
         }
     }
