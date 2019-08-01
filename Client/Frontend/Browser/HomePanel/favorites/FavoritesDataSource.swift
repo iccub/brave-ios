@@ -5,8 +5,7 @@ import Storage
 import CoreData
 import Shared
 import Data
-
-private let log = Logger.browserLogger
+import os.log
 
 class FavoritesDataSource: NSObject, UICollectionViewDataSource {
     var frc: NSFetchedResultsController<Bookmark>?
@@ -33,7 +32,7 @@ class FavoritesDataSource: NSObject, UICollectionViewDataSource {
         do {
             try frc?.performFetch()
         } catch {
-            log.error("Favorites fetch error")
+            os_log(.error, log: Log.browser, "Favorites fetch error, %{public}s", error.localizedDescription)
         }
     }
     

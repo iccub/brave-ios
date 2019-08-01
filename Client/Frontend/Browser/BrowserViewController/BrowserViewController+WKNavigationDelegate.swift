@@ -7,8 +7,7 @@ import WebKit
 import Shared
 import Data
 import BraveShared
-
-private let log = Logger.browserLogger
+import os.log
 
 extension WKNavigationAction {
     /// Allow local requests only if the request is privileged.
@@ -85,7 +84,8 @@ extension BrowserViewController: WKNavigationDelegate {
         if let customHeader = UserReferralProgram.shouldAddCustomHeader(for: navigationAction.request) {
             decisionHandler(.cancel)
             var newRequest = navigationAction.request
-            UrpLog.log("Adding custom header: [\(customHeader.field): \(customHeader.value)] for domain: \(newRequest.url?.absoluteString ?? "404")")
+            os_log(.default, log: Log.referrals, "Adding custom header: [%s: %s] for domain: %s",
+                   customHeader.field, customHeader.value, newRequest.url?.absoluteString ?? "404")
             newRequest.addValue(customHeader.value, forHTTPHeaderField: customHeader.field)
             webView.load(newRequest)
             return
@@ -97,7 +97,8 @@ extension BrowserViewController: WKNavigationDelegate {
         }
 
         if !navigationAction.isAllowed && navigationAction.navigationType != .backForward {
-            log.warning("Denying unprivileged request: \(navigationAction.request)")
+            os_log(.info, log: Log.browser, "Denying unprivileged request: %s",
+                   navigationAction.request.url?.absoluteString ?? "404")
             decisionHandler(.cancel)
             return
         }

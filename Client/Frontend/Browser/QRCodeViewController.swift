@@ -6,8 +6,7 @@ import Foundation
 import AVFoundation
 import SnapKit
 import Shared
-
-private let log = Logger.browserLogger
+import os.log
 
 private struct QRCodeViewControllerUX {
     static let navigationBarBackgroundColor = UIColor.black
@@ -272,7 +271,7 @@ extension QRCodeViewController: AVCaptureMetadataOutputObjectsDelegate {
             stopScanLineAnimation()
             self.dismiss(animated: true, completion: {
                 guard let metaData = metadataObjects.first as? AVMetadataMachineReadableCodeObject, let qrCodeDelegate = self.qrCodeDelegate, let text = metaData.stringValue else {
-                    log.debug("Unable to scan QR code")
+                    os_log(.debug, log: Log.browser, "Unable to scan QR code")
                         return
                 }
 

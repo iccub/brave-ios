@@ -6,8 +6,7 @@ import Foundation
 import Shared
 import BraveShared
 import Deferred
-
-private let log = Logger.browserLogger
+import os.log
 
 private struct AdBlockNetworkResource {
     let resource: CachedNetworkResource
@@ -26,7 +25,7 @@ class AdblockResourceDownloader {
     
     init(networkManager: NetworkManager = NetworkManager(), locale: String? = Locale.current.languageCode) {
         if locale == nil {
-            log.warning("No locale provided, using default one(\"en\")")
+            os_log(.info, log: Log.adBlocking, "No locale provided, using default one(\"en\")")
         }
         self.locale = locale ?? "en"
         self.networkManager = networkManager
@@ -41,20 +40,20 @@ class AdblockResourceDownloader {
     
     func regionalAdblockResourcesSetup() {
         if !Preferences.Shields.useRegionAdBlock.value {
-            log.debug("Regional adblocking disabled, aborting attempt to download regional resources")
+            os_log(.info, log: Log.adBlocking, "Regional adblocking disabled, aborting attempt to download regional resources")
             return
         }
         
         downloadResources(type: .regional(locale: locale),
                           queueName: "Regional adblock setup").uponQueue(.main) {
-            log.debug("Regional blocklists download and setup completed.")
+            os_log(.info, log: Log.adBlocking, "Regional blocklists download and setup completed.")
         }
     }
     
     func generalAdblockResourcesSetup() {
         downloadResources(type: .general,
                           queueName: "General adblock setup").uponQueue(.main) {
-                            log.debug("General blocklists download and setup completed.")
+            os_log(.info, log: Log.adBlocking, "General blocklists download and setup completed.")
         }
     }
     
@@ -104,7 +103,7 @@ class AdblockResourceDownloader {
     
     private func fileFromDocumentsAsString(_ name: String, inFolder folder: String) -> String? {
         guard let folderUrl = FileManager.default.getOrCreateFolder(name: folder) else {
-            log.error("Failed to get folder: \(folder)")
+            os_log(.error, log: Log.filesystem, "Failed to get folder %{public}s", folder)
             return nil
         }
         

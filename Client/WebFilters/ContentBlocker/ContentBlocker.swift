@@ -7,8 +7,7 @@ import Shared
 import Deferred
 import Data
 import BraveShared
-
-private let log = Logger.browserLogger
+import os.log
 
 protocol ContentBlocker: class, Hashable {
     // Make constant `let
@@ -32,8 +31,8 @@ extension ContentBlocker {
             BlocklistName.loadJsonFromBundle(forResource: self.filename) { jsonString in
                 ruleStore.compileContentRuleList(forIdentifier: self.filename, encodedContentRuleList: jsonString) { rule, error in
                     if let error = error {
-                        // TODO #382: Potential telemetry location
-                        log.error("Content blocker '\(self.filename)' errored: \(error.localizedDescription)")
+                        os_log(.error, log: Log.adBlocking, "Content blocker %{public}s error: %{public}s",
+                               self.filename, error.localizedDescription)
                         assert(false)
                     }
                     assert(rule != nil)

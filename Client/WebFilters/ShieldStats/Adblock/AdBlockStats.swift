@@ -4,8 +4,7 @@ import Foundation
 import Shared
 import BraveShared
 import Deferred
-
-private let log = Logger.browserLogger
+import os.log
 
 class AdBlockStats: LocalAdblockResourceProtocol {
     static let shared = AdBlockStats()
@@ -52,7 +51,7 @@ class AdBlockStats: LocalAdblockResourceProtocol {
         let fm = FileManager.default
 
         guard let folderUrl = fm.getOrCreateFolder(name: AdblockResourceDownloader.folderName) else {
-            log.error("Could not get directory with .dat files")
+            os_log(.error, log: Log.adBlocking, "Could not get directory with .dat files")
             return
         }
         
@@ -95,7 +94,7 @@ class AdBlockStats: LocalAdblockResourceProtocol {
                 if let checkedItem = checkedItem as? Bool {
                     return checkedItem
                 } else {
-                    log.error("Can't cast checkedItem to Bool")
+                    os_log(.error, log: Log.adBlocking, "Can't cast checkedItem to Bool")
                     return false
                 }
             }

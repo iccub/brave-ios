@@ -4,8 +4,7 @@
 
 import WebKit
 import Shared
-
-private let log = Logger.browserLogger
+import os.log
 
 class UserScriptManager {
 
@@ -65,7 +64,8 @@ class UserScriptManager {
     
     private let fingerprintingProtectionUserScript: WKUserScript? = {
         guard let path = Bundle.main.path(forResource: "FingerprintingProtection", ofType: "js"), let source = try? String(contentsOfFile: path) else {
-            log.error("Failed to load fingerprinting protection user script")
+            os_log(.error, log: Log.adBlocking, "Failed to load fingerprinting protection user script")
+            
             return nil
         }
         return WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: false)
@@ -73,7 +73,7 @@ class UserScriptManager {
     
     private let cookieControlUserScript: WKUserScript? = {
         guard let path = Bundle.main.path(forResource: "CookieControl", ofType: "js"), let source: String = try? String(contentsOfFile: path) else {
-            log.error("Failed to load cookie control user script")
+            os_log(.error, log: Log.browser, "Failed to load cookie control user script")
             return nil
         }
         var alteredSource: String = source
@@ -89,7 +89,7 @@ class UserScriptManager {
     // FIDO legacy sign and register APIs that have different arguments
     private let U2FUserScript: WKUserScript? = {
         guard let path = Bundle.main.path(forResource: "U2F", ofType: "js"), let source = try? String(contentsOfFile: path) else {
-            log.error("Failed to load U2F.js")
+            os_log(.error, log: Log.webAuthentication, "Failed to load U2F.js")
             return nil
         }
         
@@ -110,7 +110,7 @@ class UserScriptManager {
     // with hooks that plug into the Yubico API
     private let U2FLowLevelUserScript: WKUserScript? = {
         guard let path = Bundle.main.path(forResource: "U2F-low-level", ofType: "js"), let source = try? String(contentsOfFile: path) else {
-            log.error("Failed to load U2F-low-level.js")
+            os_log(.error, log: Log.webAuthentication, "Failed to load U2F-low-level.js")
             return nil
         }
         var alteredSource = source
@@ -122,7 +122,7 @@ class UserScriptManager {
     
     private let resourceDownloadManagerUserScript: WKUserScript? = {
         guard let path = Bundle.main.path(forResource: "ResourceDownloader", ofType: "js"), let source = try? String(contentsOfFile: path) else {
-            log.error("Failed to load ResourceDownloader.js")
+            os_log(.error, log: Log.browser, "Failed to load ResourceDownloader.js")
             return nil
         }
         var alteredSource: String = source
@@ -138,7 +138,7 @@ class UserScriptManager {
     
     private let WindowRenderHelperScript: WKUserScript? = {
         guard let path = Bundle.main.path(forResource: "WindowRenderHelper", ofType: "js"), let source = try? String(contentsOfFile: path) else {
-            log.error("Failed to load WindowRenderHelper.js")
+            os_log(.error, log: Log.browser, "Failed to load WindowRenderHelper.js")
             return nil
         }
         

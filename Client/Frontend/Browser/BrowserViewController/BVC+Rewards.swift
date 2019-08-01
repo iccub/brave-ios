@@ -7,13 +7,12 @@ import BraveRewards
 import BraveRewardsUI
 import Data
 import Shared
+import os.log
 
 struct RewardsHelper {
     static func configureRewardsLogs(showFileName: Bool = true, showLine: Bool = true) {
         RewardsLogger.configure(logCallback: { logLevel, line, file, data in
             if data.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return }
-            
-            let logger = Logger.rewardsLogger
             
             var extraInfo = ""
             
@@ -25,13 +24,17 @@ struct RewardsHelper {
             
             let logOutput = extraInfo.isEmpty ? data : "\(extraInfo) \(data)"
             
+            var osLogLevel: OSLogType = .debug
+            
             switch logLevel {
-            case .logDebug: logger.debug(logOutput)
+            case .logDebug: osLogLevel = .debug
             // Response and request log levels are ledger-specific.
-            case .logInfo, .logResponse, .logRequest: logger.info(logOutput)
-            case .logWarning: logger.warning(logOutput)
-            case .logError: logger.error(logOutput)
+            case .logInfo, .logResponse, .logRequest, .logWarning: osLogLevel = .info
+            case .logError: osLogLevel = .error
             }
+            
+            // FIXME: Currently there is no way to hide potentially sensitive log data coming from rewards.
+            os_log(osLogLevel, log: Log.rewards, "%{public}s", logOutput)
         }, withFlush: nil)
     }
 }

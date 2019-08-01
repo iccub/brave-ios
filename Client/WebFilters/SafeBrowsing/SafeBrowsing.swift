@@ -7,8 +7,7 @@ import WebKit
 import Shared
 import BraveShared
 import Data
-
-private let log = Logger.browserLogger
+import os.log
 
 class SafeBrowsing {
     let listNames = MalwareList.generate()
@@ -25,7 +24,7 @@ class SafeBrowsing {
     
     func shouldBlock(_ url: URL) -> Bool {
         guard let baseDomain = url.baseDomain else {
-            log.error("url: \(url) host is nil")
+            os_log(.error, log: Log.adBlocking, "url %s host is nil", url.absoluteString)
             return false
         }
         let isPrivateBrowsing = PrivateBrowsingManager.shared.isPrivateBrowsing
@@ -57,7 +56,8 @@ class SafeBrowsing {
             }
             
             DispatchQueue.main.async {
-                log.info("Safe browsing list was filled with \(newList.count) records")
+                os_log(.info, log: Log.adBlocking, "Safe browsing list was filled with %{public}d records",
+                       newList.count)
                 self.domainList = newList
             }
         }
@@ -65,14 +65,15 @@ class SafeBrowsing {
     
     private func openList(withName name: String) -> String? {
         guard let filePath = Bundle.main.path(forResource: name, ofType: "txt") else {
-            log.error("Could not find text file with :\(name) name")
+            os_log(.error, log: Log.filesystem, "Could not find text file with %s name", name)
             return nil
         }
 
         do {
             return try String(contentsOfFile: filePath, encoding: .utf8)
         } catch {
-            log.error("Could not open safe browsing list file with :\(name) name, error: \(error)")
+            os_log(.error, log: Log.filesystem, "Could not open safe browsing list file with %s, error: %{public}s",
+                   name, error.localizedDescription)
             return nil
         }
     }

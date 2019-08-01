@@ -5,8 +5,7 @@
 import Foundation
 import Deferred
 import Shared
-
-private let log = Logger.browserLogger
+import os.log
 
 class NetworkManager {
     private let session: NetworkSession
@@ -52,7 +51,8 @@ class NetworkManager {
         
         session.dataRequest(with: request) { data, response, error -> Void in
             if let err = error {
-                log.error(err.localizedDescription)
+                os_log(.error, log: Log.networking, "data request error: %s",
+                       error?.localizedDescription ?? "")
                 if let retryTimeout = retryTimeout {
                     DispatchQueue.main.asyncAfter(deadline: .now() + retryTimeout) {
                         self.downloadResource(with: url, resourceType: resourceType, retryTimeout: retryTimeout).upon { resource in
@@ -64,18 +64,16 @@ class NetworkManager {
             }
             
             guard let data = data, let response = response as? HTTPURLResponse else {
-                log.error("Failed to unwrap http response or data")
+                os_log(.error, log: Log.networking, "Failed to unwrap http response or data")
                 return
             }
             
             switch response.statusCode {
             case 400...499:
-                log.error("""
-                    Failed to download, status code: \(response.statusCode),\
-                    URL:\(String(describing: response.url))
-                    """)
+                os_log(.error, log: Log.networking, "Download failed, status code: %{public}s, url: %s",
+                       response.statusCode, response.url?.absoluteString ?? "")
             case fileNotModifiedStatusCode:
-                log.info("File not modified")
+                os_log(.info, log: Log.networking, "File was not modified")
             default:
                 let responseEtag = resourceType.isCached() ?
                     response.allHeaderFields[etagHeader] as? String : nil

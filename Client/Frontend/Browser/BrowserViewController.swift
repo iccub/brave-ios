@@ -2705,7 +2705,6 @@ extension BrowserViewController {
         _ = Try(withTry: {
             inputAssistant.trailingBarButtonGroups.last?.barButtonItems.append(item)
         }) { exception in
-//            log.error("Failed adding custom search button to input assistant: \(String(describing: exception))")
             os_log(.error, log: Log.browser, "Failed adding custom search button to input assistant: %{public}s", String(describing: exception))
         }
     }

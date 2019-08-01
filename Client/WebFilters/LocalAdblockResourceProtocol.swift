@@ -4,8 +4,7 @@
 
 import Foundation
 import Shared
-
-private let log = Logger.browserLogger
+import os.log
 
 protocol LocalAdblockResourceProtocol {
     func loadLocalData(name: String, type: String, completion: ((Data) -> Void))
@@ -14,7 +13,8 @@ protocol LocalAdblockResourceProtocol {
 extension LocalAdblockResourceProtocol {
     func loadLocalData(name: String, type: String, completion: ((Data) -> Void)) {
         guard let path = Bundle.main.path(forResource: name, ofType: type) else {
-            log.error("Could not find local file with name: \(name) and type :\(type)")
+            os_log(.error, log: Log.filesystem, "Could not find local file with name %{public}s and type %{public}s",
+                   name, type)
             return
         }
         
@@ -24,7 +24,7 @@ extension LocalAdblockResourceProtocol {
             let data = try Data(contentsOf: url)
             completion(data)
         } catch {
-            log.error(error)
+            os_log(.error, log: Log.filesystem, "Data error: %{public}s", error.localizedDescription)
         }
     }
 }

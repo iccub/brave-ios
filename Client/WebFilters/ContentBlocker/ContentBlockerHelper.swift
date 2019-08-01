@@ -7,8 +7,7 @@ import Shared
 import Deferred
 import Data
 import BraveShared
-
-private let log = Logger.browserLogger
+import os.log
 
 enum BlockerStatus: String {
     case Disabled
@@ -111,7 +110,7 @@ class ContentBlockerHelper {
             ContentBlockerHelper.ruleStore.lookUpContentRuleList(forIdentifier: name) { rule, error in
                 guard let rule = rule else {
                     let msg = "lookUpContentRuleList for \(name):  \(error?.localizedDescription ?? "empty rules")"
-                    log.error("Content blocker error: \(msg)")
+                    os_log(.error, log: Log.adBlocking, "Content blocker error: %{public}s", msg)
                     return
                 }
                 self.addToTab(contentRuleList: rule)

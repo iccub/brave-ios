@@ -8,8 +8,7 @@ import WebKit
 import Deferred
 import Shared
 import BraveShared
-
-private let log = Logger.browserLogger
+import os.log
 
 class AdblockDebugMenuTableViewController: TableViewController {
 
@@ -96,7 +95,8 @@ class AdblockDebugMenuTableViewController: TableViewController {
                             row.detailText = detailText
                         }
                     } catch {
-                        log.error(error)
+                        os_log(.error, log: Log.browser, "%{public}s", error.localizedDescription)
+                        
                         row.detailText = "Failed to get rule count for: \($0)"
                     }
                 } else {

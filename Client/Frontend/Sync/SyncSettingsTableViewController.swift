@@ -5,8 +5,7 @@ import CoreData
 import Shared
 import Data
 import BraveShared
-
-private let log = Logger.browserLogger
+import os.log
 
 class SyncSettingsTableViewController: UITableViewController {
     private var frc: NSFetchedResultsController<Device>?
@@ -36,7 +35,7 @@ class SyncSettingsTableViewController: UITableViewController {
         do {
             try frc?.performFetch()
         } catch {
-            log.error("frc fetch error: \(error)")
+            os_log(.error, log: Log.sync, "frc fetch error, %{public}s", error.localizedDescription)
         }
         
         let text = UITextView().then {
@@ -191,7 +190,7 @@ class SyncSettingsTableViewController: UITableViewController {
         let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
         
         guard let frc = frc else {
-            log.error("FetchedResultsController is nil.")
+            os_log(.error, log: Log.sync, "FetchedResultsController is nil")
             return UITableViewCell()
         }
         
@@ -208,7 +207,7 @@ class SyncSettingsTableViewController: UITableViewController {
             setFullWidthSeparator(for: cell)
             configureButtonCell(cell, buttonIndex: indexPath.row)
         default:
-            log.error("Section index out of bounds.")
+            os_log(.error, log: Log.sync, "Section index out of bounds.")
         }
         
         return cell
@@ -266,7 +265,7 @@ extension SyncSettingsTableViewController: NSFetchedResultsControllerDelegate {
             guard let indexPath = indexPath else { return }
             tableView.deleteRows(at: [indexPath], with: .fade)
         default:
-            log.info("Operation type: \(type) is not handled.")
+            os_log(.error, log: Log.sync, "Operation type %{public}s is not handled", String(describing: type))
         }
     }
 }

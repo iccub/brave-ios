@@ -10,8 +10,7 @@ import XCGLogger
 import WebKit
 import Deferred
 import SwiftyJSON
-
-private let log = Logger.browserLogger
+import os.log
 
 class LoginsHelper: TabContentScript {
     fileprivate weak var tab: Tab?
@@ -107,7 +106,7 @@ class LoginsHelper: TabContentScript {
 
     func setCredentials(_ login: LoginData) {
         if login.password.isEmpty {
-            log.debug("Empty password")
+            os_log(.debug, log: Log.browser, "Empty password when setting credentials")
             return
         }
 
@@ -115,7 +114,7 @@ class LoginsHelper: TabContentScript {
                .getLoginsForProtectionSpace(login.protectionSpace, withUsername: login.username)
                .uponQueue(.main) { res in
             if let data = res.successValue {
-                log.debug("Found \(data.count) logins.")
+                os_log(.debug, log: Log.browser, "Found %d logins", data.count)
                 for saved in data {
                     if let saved = saved {
                         if saved.password == login.password {
@@ -203,7 +202,7 @@ class LoginsHelper: TabContentScript {
         profile.logins.getLoginsForProtectionSpace(login.protectionSpace).uponQueue(.main) { res in
             var jsonObj = [String: Any]()
             if let cursor = res.successValue {
-                log.debug("Found \(cursor.count) logins.")
+                os_log(.debug, log: Log.browser, "Found %d logins", cursor.count)
                 jsonObj["requestId"] = requestId
                 jsonObj["name"] = "RemoteLogins:loginsFound"
                 jsonObj["logins"] = cursor.map { $0!.toDict() }

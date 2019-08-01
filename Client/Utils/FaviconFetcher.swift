@@ -11,8 +11,8 @@ import SDWebImage
 import Fuzi
 import SwiftyJSON
 import class Data.FaviconMO 
+import os.log
 
-private let log = Logger.browserLogger
 private let queue = DispatchQueue(label: "FaviconFetcher", attributes: DispatchQueue.Attributes.concurrent)
 
 class FaviconFetcherErrorType: MaybeErrorType {
@@ -266,7 +266,7 @@ open class FaviconFetcher: NSObject, XMLParserDelegate {
     // Default favicons and background colors provided via mozilla/tippy-top-sites
     class func getDefaultIcons() -> [String: (color: UIColor, url: String)] {
         guard let filePath = Bundle.main.path(forResource: "top_sites", ofType: "json") else {
-            log.error("Failed to get bundle path for \"top_sites.json\"")
+            os_log(.error, log: Log.filesystem, "Failed to get bundle path for \"top_sites.json\"")
             return [:]
         }
         do {
@@ -290,7 +290,8 @@ open class FaviconFetcher: NSObject, XMLParserDelegate {
             })
             return icons
         } catch {
-            log.error("Failed to get default icons at \(filePath): \(error.localizedDescription)")
+            os_log(.error, log: Log.filesystem, "Failed to get default icons at %s, %{public}s",
+                   filePath, error.localizedDescription)
             return [:]
         }
     }

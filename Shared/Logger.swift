@@ -14,6 +14,13 @@ public struct Log {
     public static let migration = OSLog(subsystem: subsystem, category: "migration")
     public static let referrals = OSLog(subsystem: subsystem, category: "URP")
     public static let webAuthentication = OSLog(subsystem: subsystem, category: "webauth")
+    public static let adBlocking = OSLog(subsystem: subsystem, category: "adblock")
+    
+    /// Logs related to saving files, creting, reading directories, granting r/w permissions..
+    public static let filesystem = OSLog(subsystem: subsystem, category: "filesystem")
+    public static let sync = OSLog(subsystem: subsystem, category: "sync")
+    public static let networking = OSLog(subsystem: subsystem, category: "networking")
+    public static let rewards = OSLog(subsystem: subsystem, category: "rewards")
 }
 
 public struct Logger {}

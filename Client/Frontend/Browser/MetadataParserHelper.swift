@@ -7,8 +7,7 @@ import Shared
 import Storage
 import XCGLogger
 import WebKit
-
-private let log = Logger.browserLogger
+import os.log
 
 class MetadataParserHelper: TabEventHandler {
     private var tabObservers: TabObservers!
@@ -39,7 +38,7 @@ class MetadataParserHelper: TabEventHandler {
             guard let dict = result as? [String: Any],
                 let pageURL = tab.url?.displayURL,
                 let pageMetadata = PageMetadata.fromDictionary(dict) else {
-                    log.debug("Page contains no metadata!")
+                    os_log(.debug, log: Log.browser, "Page contains no metadata!")
                     return
             }
 

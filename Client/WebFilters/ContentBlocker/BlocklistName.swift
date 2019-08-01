@@ -7,8 +7,7 @@ import Shared
 import Deferred
 import Data
 import BraveShared
-
-private let log = Logger.browserLogger
+import os.log
 
 class BlocklistName: CustomStringConvertible, ContentBlocker {
     
@@ -104,14 +103,14 @@ class BlocklistName: CustomStringConvertible, ContentBlocker {
                  ruleStore: WKContentRuleListStore = ContentBlockerHelper.ruleStore) -> Deferred<()> {
         let completion = Deferred<()>()
         guard let data = data, let dataString = String(data: data, encoding: .utf8) else {
-            log.error("Could not read data for content blocker compilation.")
+            os_log(.error, log: Log.adBlocking, "Could not read data for content blocker compilation.")
             return completion
         }
         
         ruleStore.compileContentRuleList(forIdentifier: self.filename, encodedContentRuleList: dataString) { rule, error in
             if let error = error {
-                // TODO #382: Potential telemetry location
-                log.error("Content blocker '\(self.filename)' errored: \(error.localizedDescription)")
+                os_log(.error, log: Log.adBlocking, "Content blocker %{public}s error: %{public}s",
+                       self.filename, error.localizedDescription)
                 return
             }
             assert(rule != nil)

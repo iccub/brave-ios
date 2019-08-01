@@ -3,8 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import Shared
-
-private let log = Logger.browserLogger
+import os.log
 
 class HttpsEverywhereStats: LocalAdblockResourceProtocol {
     static let shared = HttpsEverywhereStats()
@@ -25,7 +24,7 @@ class HttpsEverywhereStats: LocalAdblockResourceProtocol {
     
     func shouldUpgrade(_ url: URL?) -> Bool {
         guard let url = url else {
-            log.error("Httpse should block called with empty url")
+            os_log(.error, log: Log.adBlocking, "Httpse should block called with empty url")
             return false
         }
         
@@ -35,7 +34,7 @@ class HttpsEverywhereStats: LocalAdblockResourceProtocol {
     func loadDb(dir: String, name: String) {
         let path = dir + "/" + name
         if !FileManager.default.fileExists(atPath: path) {
-            log.error("Httpse db file doesn't exist")
+            os_log(.error, log: Log.adBlocking, "Httpse db file doesn't exist")
             return
         }
         
@@ -67,7 +66,10 @@ class HttpsEverywhereStats: LocalAdblockResourceProtocol {
             if fm.fileExists(atPath: dir + "/" + HttpsEverywhereStats.levelDbFileName) {
                 do {
                     try FileManager.default.removeItem(atPath: dir + "/" + HttpsEverywhereStats.levelDbFileName)
-                } catch { log.error("failed to remove leveldb file before unzip \(error)") }
+                } catch {
+                    os_log(.error, log: Log.adBlocking, "failed to remove leveldb file before unzip, %{public}s",
+                           error.localizedDescription)
+                }
             }
             
             self.unzipFile(dir: dir, data: data)
@@ -88,7 +90,7 @@ class HttpsEverywhereStats: LocalAdblockResourceProtocol {
                                              progress: { _ in
             })
         } catch {
-            log.error("unzip file error: \(error)")
+            os_log(.error, log: Log.adBlocking, "httpse file unzip error: %{public}s", error.localizedDescription)
         }
     }
 }

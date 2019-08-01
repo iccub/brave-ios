@@ -6,13 +6,13 @@ import UIKit
 import Shared
 import BraveShared
 import Deferred
+import os.log
 
 private let SectionToggles = 0
 private let SectionButton = 1
 private let NumberOfSections = 2
 private let SectionHeaderFooterIdentifier = "SectionHeaderFooterIdentifier"
 
-private let log = Logger.browserLogger
 
 private let HistoryClearableIndex = 0
 
@@ -120,7 +120,7 @@ class ClearPrivateDataTableViewController: UITableViewController {
         let deferred = Deferred<Void>()
         
         clearables.enumerated().map { clearable in
-            log.info("Clearing \(clearable.element).")
+            os_log(.info, log: Log.browser, "Clearing %s", String(describing: clearable.element))
             
             let res = Success()
             succeed().upon() { _ in // move off main thread
@@ -133,7 +133,7 @@ class ClearPrivateDataTableViewController: UITableViewController {
             .allSucceed()
             .upon { result in
                 if !result.isSuccess && !secondAttempt {
-                    log.error("Private data NOT cleared successfully")
+                    os_log(.error, log: Log.browser, "Private data failed to clear")
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
                         // For some reason, a second attempt seems to always succeed
                         clearPrivateData(clearables, secondAttempt: true).upon() { _ in
@@ -144,7 +144,7 @@ class ClearPrivateDataTableViewController: UITableViewController {
                 }
                 
                 if !result.isSuccess {
-                    log.error("Private data NOT cleared after 2 attempts")
+                    os_log(.error, log: Log.browser, "Private data failed to clear after 2 attempts")
                 }
                 deferred.fill(())
         }

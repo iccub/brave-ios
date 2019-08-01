@@ -7,8 +7,7 @@ import WebKit
 import GCDWebServers
 import Shared
 import Storage
-
-private let log = Logger.browserLogger
+import os.log
 
 class ErrorPageHelper {
     static let MozDomain = "mozilla"
@@ -195,7 +194,7 @@ class ErrorPageHelper {
             variables["actions"] = actions
 
             guard let unwrappedAsset = asset else {
-                log.error("Asset is nil")
+                os_log(.error, log: Log.browser, "Asset is nil")
                 return GCDWebServerResponse(statusCode: 404)
             }
             
@@ -209,7 +208,7 @@ class ErrorPageHelper {
         server.registerHandlerForMethod("GET", module: "errors", resource: "NetError.css", handler: { (request) -> GCDWebServerResponse? in
             let path = Bundle(for: self).path(forResource: "NetError", ofType: "css")!
             guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)) else {
-                log.error("NetError data is nil")
+                os_log(.error, log: Log.browser, "NetError data is nil")
                 return GCDWebServerResponse(statusCode: 404)
             }
             
@@ -220,7 +219,7 @@ class ErrorPageHelper {
             let path = Bundle(for: self).path(forResource: "CertError", ofType: "css")!
             
             guard let data = try? Data(contentsOf: URL(fileURLWithPath: path)) else {
-                log.error("CertError data is nil")
+                os_log(.error, log: Log.browser, "CertError data is nil")
                 return GCDWebServerResponse(statusCode: 404)
             }
             

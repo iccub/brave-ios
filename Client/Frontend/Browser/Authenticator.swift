@@ -6,8 +6,7 @@ import Foundation
 import Shared
 import Storage
 import Deferred
-
-private let log = Logger.browserLogger
+import os.log
 
 class Authenticator {
     fileprivate static let MaxAuthenticationAttempts = 3
@@ -72,7 +71,9 @@ class Authenticator {
                     }
                     return nil
                 }
-                loginsProvider.removeLoginsWithGUIDs(malformedGUIDs).upon { log.debug("Removed malformed logins. Success :\($0.isSuccess)") }
+                loginsProvider.removeLoginsWithGUIDs(malformedGUIDs).upon {
+                    os_log(.debug, log: Log.browser, "Removed malformed logins. Success: %s ", $0.isSuccess)
+                }
             }
 
             // Found a single entry but the schemes don't match. This is a result of a schemeless entry that we

@@ -8,8 +8,7 @@ import Shared
 import Eureka
 import Data
 import BraveShared
-
-private let log = Logger.browserLogger
+import os.log
 
 class BookmarksViewController: SiteTableViewController, ToolbarUrlActionsProtocol {
   /// Called when the bookmarks are updated via some user input (i.e. Delete, edit, etc.)
@@ -91,8 +90,8 @@ class BookmarksViewController: SiteTableViewController, ToolbarUrlActionsProtoco
             bookmarksFRC?.delegate = self
         }
       try self.bookmarksFRC?.performFetch()
-    } catch let error as NSError {
-      log.error(error.description)
+    } catch {
+      os_log(.error, log: Log.browser, "Reload data error, %{public}s", error.localizedDescription)
     }
     
     super.reloadData()

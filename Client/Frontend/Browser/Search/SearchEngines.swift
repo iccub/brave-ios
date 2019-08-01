@@ -7,8 +7,7 @@ import Shared
 import BraveShared
 import Storage
 import XCGLogger
-
-private let log = Logger.browserLogger
+import os.log
 
 private let customSearchEnginesFileName = "customEngines.plist"
 
@@ -201,7 +200,8 @@ class SearchEngines {
             let data = try Data(contentsOf: URL(fileURLWithPath: customEngineFilePath()))
             return (try NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(data) as? [OpenSearchEngine]) ?? []
         } catch {
-            log.error("Failed to load custom search engines: \(error)")
+            os_log(.error, log: Log.browser, "Failed to load custom search engines: %{public}s",
+                   error.localizedDescription)
             return []
         }
     }()
@@ -211,7 +211,8 @@ class SearchEngines {
             let data = try NSKeyedArchiver.archivedData(withRootObject: customEngines, requiringSecureCoding: true)
             try data.write(to: URL(fileURLWithPath: customEngineFilePath()))
         } catch {
-            log.error("Failed to save custom engines: \(customEngines) - \(error.localizedDescription)")
+            os_log(.error, log: Log.browser, "Failed to save custom engines %{public}s, %{public}s",
+                   customEngines, error.localizedDescription)
         }
     }
 
