@@ -4,10 +4,7 @@
 
 import Foundation
 import Shared
-import XCGLogger
 import Deferred
-
-private let log = Logger.syncLogger
 
 open class SQLiteLogins: BrowserLogins {
 
@@ -108,7 +105,7 @@ open class SQLiteLogins: BrowserLogins {
     }
 
     func notifyLoginDidChange() {
-        log.debug("Notifying login did change.")
+        //log.debug("Notifying login did change.")
 
         // For now we don't care about the contents.
         // This posts immediately to the shared notification center.
@@ -181,9 +178,6 @@ open class SQLiteLogins: BrowserLogins {
             protectionSpace.urlString(),
             protectionSpace.host,
         ]
-        if Logger.logPII {
-            log.debug("Looking for login: \(protectionSpace.urlString()) && \(protectionSpace.host)")
-        }
         return db.runQuery(sql, args: args, factory: SQLiteLogins.LoginDataFactory)
     }
 
@@ -205,10 +199,6 @@ open class SQLiteLogins: BrowserLogins {
                 protectionSpace.urlString(), protectionSpace.host
             ]
             usernameMatch = "username IS NULL"
-        }
-
-        if Logger.logPII {
-            log.debug("Looking for login with username: \(username ?? "nil"), first arg: \(args[0] ?? "nil")")
         }
 
         let sql = """
@@ -332,13 +322,13 @@ open class SQLiteLogins: BrowserLogins {
             if rows.count > 0 {
                 return succeed()
             }
-            log.debug("No overlay; cloning one for GUID \(guid).")
+            //log.debug("No overlay; cloning one for GUID \(guid).")
             return self.cloneMirrorToOverlay(guid)
                 >>== { count in
                     if count > 0 {
                         return succeed()
                     }
-                    log.warning("Failed to create local overlay for GUID \(guid).")
+                    //log.warning("Failed to create local overlay for GUID \(guid).")
                     return deferMaybe(NoSuchRecordError(guid: guid))
             }
         }
@@ -607,16 +597,16 @@ extension SQLiteLogins: SyncableLogins {
         // we assume that once a record makes it into the mirror, that the local record association
         // has already taken place, and we're tracking local changes correctly.
         if let mirror = mirror {
-            log.debug("Mirror record found for changed record \(mirror.guid).")
+            //log.debug("Mirror record found for changed record \(mirror.guid).")
             if let local = local {
-                log.debug("Changed local overlay found for \(local.guid). Resolving conflict with 3WM.")
+                //log.debug("Changed local overlay found for \(local.guid). Resolving conflict with 3WM.")
                 // * Changed remotely and locally (conflict). Resolve the conflict using a three-way merge: the
                 //   local mirror is the shared parent of both the local overlay and the new remote record.
                 //   Apply results as in the co-creation case.
                 return self.resolveConflictBetween(local: local, upstream: upstream, shared: mirror)
             }
 
-            log.debug("No local overlay found. Updating mirror to upstream.")
+            //log.debug("No local overlay found. Updating mirror to upstream.")
             // * Changed remotely but not locally. Apply the remote changes to the mirror.
             //   There is no local overlay to discard or resolve against.
             return self.updateMirrorToLogin(upstream, fromPrevious: mirror)
@@ -636,7 +626,7 @@ extension SQLiteLogins: SyncableLogins {
             // With our 9-byte GUIDs, the chance of that happening is very small, so we
             // assume that this device has previously connected to this account, and we
             // go right ahead with a merge.
-            log.debug("Local record with GUID \(local.guid) but no mirror. This is unusual; assuming disconnect-reconnect scenario. Smushing.")
+            //log.debug("Local record with GUID \(local.guid) but no mirror. This is unusual; assuming disconnect-reconnect scenario. Smushing.")
             return self.resolveConflictWithoutParentBetween(local: local, upstream: upstream)
         }
 
@@ -647,13 +637,13 @@ extension SQLiteLogins: SyncableLogins {
         // and proceed to reconcile the change on a content basis.
         return self.findLocalRecordByContent(upstream) >>== { local in
             if let local = local {
-                log.debug("Local record \(local.guid) content-matches new remote record \(upstream.guid). Smushing.")
+                //log.debug("Local record \(local.guid) content-matches new remote record \(upstream.guid). Smushing.")
                 return self.resolveConflictWithoutParentBetween(local: local, upstream: upstream)
             }
 
             // * New upstream only; no local overlay, content-based merge,
             //   or shared parent in the mirror. Insert it in the mirror.
-            log.debug("Never seen remote record \(upstream.guid). Mirroring.")
+            //log.debug("Never seen remote record \(upstream.guid). Mirroring.")
             return self.insertNewMirror(upstream)
         }
     }
@@ -750,7 +740,7 @@ extension SQLiteLogins: SyncableLogins {
                 sql = primary + " AND (formSubmitURL = '' OR (instr(formSubmitURL, ?) > 0))"
                 args.append(hostPort)
             } else {
-                log.warning("Incoming formSubmitURL is non-empty but is not a valid URL with a host. Not matching local.")
+                //log.warning("Incoming formSubmitURL is non-empty but is not a valid URL with a host. Not matching local.")
                 return deferMaybe(nil)
             }
         }
@@ -767,7 +757,7 @@ extension SQLiteLogins: SyncableLogins {
                 // TODO: join against the mirror table to exclude local logins that
                 // already match a server record.
                 // Right now just take the first.
-                log.warning("Got \(cursor.count) local logins with matching details! This is most unexpected.")
+                //log.warning("Got \(cursor.count) local logins with matching details! This is most unexpected.")
                 return deferMaybe(cursor[0])
             }
         }
@@ -806,11 +796,11 @@ extension SQLiteLogins: SyncableLogins {
         // Do the best we can. Either the local wins and will be
         // uploaded, or the remote wins and we delete our overlay.
         if local.timePasswordChanged > upstream.timePasswordChanged {
-            log.debug("Conflicting records with no shared parent. Using newer local record.")
+            //log.debug("Conflicting records with no shared parent. Using newer local record.")
             return self.insertNewMirror(upstream, isOverridden: 1)
         }
 
-        log.debug("Conflicting records with no shared parent. Using newer remote record.")
+        //log.debug("Conflicting records with no shared parent. Using newer remote record.")
         let args: Args = [local.guid]
         return self.insertNewMirror(upstream, isOverridden: 0)
             >>> { self.db.run("DELETE FROM loginsL WHERE guid = ?", withArgs: args) }
@@ -843,7 +833,7 @@ extension SQLiteLogins: SyncableLogins {
         // sqlite doesn't support UPDATE FROM, so instead of running 10 subqueries * n GUIDs,
         // we issue a single DELETE and a single INSERT on the mirror, then throw away the
         // local overlay that we just uploaded with another DELETE.
-        log.debug("Marking \(guids.count) GUIDs as synchronized.")
+        //log.debug("Marking \(guids.count) GUIDs as synchronized.")
 
         let queries: [(String, Args?)] = chunkCollection(guids, by: BrowserDB.MaxVariableNumber) { guids in
             let args: Args = guids.map { $0 }
@@ -879,7 +869,7 @@ extension SQLiteLogins: SyncableLogins {
     }
 
     public func markAsDeleted<T: Collection>(_ guids: T) -> Success where T.Iterator.Element == GUID {
-        log.debug("Marking \(guids.count) GUIDs as deleted.")
+        //log.debug("Marking \(guids.count) GUIDs as deleted.")
 
         let queries: [(String, Args?)] = chunkCollection(guids, by: BrowserDB.MaxVariableNumber) { guids in
             let args: Args = guids.map { $0 }

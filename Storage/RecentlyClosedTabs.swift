@@ -4,8 +4,7 @@
 
 import Foundation
 import Shared
-
-private let log = Logger.browserLogger
+import os.log
 
 open class ClosedTabsStore {
     let prefs: Prefs
@@ -33,7 +32,8 @@ open class ClosedTabsStore {
             let archivedTabsArray = try NSKeyedArchiver.archivedData(withRootObject: tabs, requiringSecureCoding: true)
             prefs.setObject(archivedTabsArray, forKey: "recentlyClosedTabs")
         } catch {
-            log.error("Failed to archive tabs array: \(tabs) - \(error.localizedDescription)")
+            os_log(.error, log: Log.browser, "Failed to archive tabs array: %{public}s",
+                   error.localizedDescription)
         }
     }
 

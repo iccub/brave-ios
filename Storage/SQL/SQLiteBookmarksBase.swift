@@ -6,8 +6,6 @@ import Deferred
 import Foundation
 import Shared
 
-private let log = Logger.syncLogger
-
 class NoSuchSearchKeywordError: MaybeErrorType {
     let keyword: String
     init(keyword: String) {

@@ -3,11 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import Foundation
-import XCGLogger
 import SwiftKeychainWrapper
 import SwiftyJSON
-
-private let log = Logger.keychainLogger
 
 public protocol JSONLiteralConvertible {
     func asJSON() -> JSON
@@ -35,25 +32,25 @@ open class KeychainCache<T: JSONLiteralConvertible> {
             KeychainWrapper.sharedAppContainerKeychain.ensureStringItemAccessibility(.afterFirstUnlock, forKey: key)
             if let s = KeychainWrapper.sharedAppContainerKeychain.string(forKey: key) {
                 if let t = factory(JSON(parseJSON: s)) {
-                    log.info("Read \(branch) from Keychain with label \(branch).\(l).")
+                    //log.info("Read \(branch) from Keychain with label \(branch).\(l).")
                     return KeychainCache(branch: branch, label: l, value: t)
                 } else {
-                    log.warning("Found \(branch) in Keychain with label \(branch).\(l), but could not parse it.")
+                    //log.warning("Found \(branch) in Keychain with label \(branch).\(l), but could not parse it.")
                 }
             } else {
-                log.warning("Did not find \(branch) in Keychain with label \(branch).\(l).")
+                //log.warning("Did not find \(branch) in Keychain with label \(branch).\(l).")
             }
         } else {
-            log.warning("Did not find \(branch) label in Keychain.")
+            //log.warning("Did not find \(branch) label in Keychain.")
         }
         // Fall through to missing.
-        log.warning("Failed to read \(branch) from Keychain.")
+        //log.warning("Failed to read \(branch) from Keychain.")
         let label = label ?? Bytes.generateGUID()
         return KeychainCache(branch: branch, label: label, value: defaultValue)
     }
 
     open func checkpoint() {
-        log.info("Storing \(self.branch) in Keychain with label \(self.branch).\(self.label).")
+        //log.info("Storing \(self.branch) in Keychain with label \(self.branch).\(self.label).")
         // TODO: PII logging.
         if let value = value,
             let jsonString = value.asJSON().stringValue() {

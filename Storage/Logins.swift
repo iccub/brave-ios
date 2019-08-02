@@ -6,9 +6,6 @@ import Foundation
 import WebKit
 import Shared
 import Deferred
-import XCGLogger
-
-private var log = Logger.syncLogger
 
 enum SyncStatus: Int {
     // Ordinarily not needed; synced items are removed from the overlay. But they start here when cloned.
@@ -163,7 +160,7 @@ open class Login: CustomStringConvertible, LoginData, LoginUsageData, Equatable 
             let url1 = URL(string: value)
 
             if url1?.host != url2?.host {
-                log.warning("Form submit URL domain doesn't match login's domain.")
+                //log.warning("Form submit URL domain doesn't match login's domain.")
             }
 
             self._formSubmitURL = value
@@ -329,7 +326,7 @@ open class Login: CustomStringConvertible, LoginData, LoginUsageData, Equatable 
         } else {
             // bug 159484 - disallow url types that don't support a hostPort.
             // (although we handle "javascript:..." as a special case above.)
-            log.debug("Couldn't parse origin for \(uriString)")
+            //log.debug("Couldn't parse origin for \(uriString)")
             realm = nil
         }
         return realm
@@ -414,7 +411,7 @@ open class Login: CustomStringConvertible, LoginData, LoginUsageData, Equatable 
         for f in b {
             let index = f.index
             if deltas[index] != nil {
-                log.warning("Collision in \(T.self) \(f.index). Using latest.")
+                //log.warning("Collision in \(T.self) \(f.index). Using latest.")
                 if preferBToA {
                     deltas[index] = f
                 }

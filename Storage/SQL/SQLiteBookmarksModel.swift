@@ -6,9 +6,6 @@ import Deferred
 import Foundation
 import Shared
 
-private let log = Logger.syncLogger
-
-
 public enum Direction {
     case buffer
     case local
@@ -125,7 +122,7 @@ open class SQLiteBookmarksModelFactory: BookmarksModelFactory {
     }
 
     open func modelForRoot() -> Deferred<Maybe<BookmarksModel>> {
-        log.debug("Getting model for root.")
+        //log.debug("Getting model for root.")
         let getFolder = self.folderForGUID(BookmarkRoots.MobileFolderGUID, title: Strings.BookmarksFolderTitleMobile)
         if self.direction == .buffer {
             return getFolder >>== self.modelWithRoot
@@ -163,7 +160,7 @@ open class SQLiteBookmarksModelFactory: BookmarksModelFactory {
             return deferMaybe(DatabaseError(description: "Refusing to remove GUID from buffer in model."))
         }
 
-        log.debug("removeByGUID: \(guid)")
+        //log.debug("removeByGUID: \(guid)")
         return self.bookmarks.removeGUIDs([guid])
     }
 
@@ -212,7 +209,7 @@ open class SQLiteBookmarksModelFactory: BookmarksModelFactory {
 
         func onlyMobile() -> Deferred<Maybe<BookmarksModel>> {
             // No desktop bookmarks.
-            log.debug("No desktop bookmarks. Only showing mobile.")
+            //log.debug("No desktop bookmarks. Only showing mobile.")
             return deferMaybe(BookmarksModel(modelFactory: factory, root: mobile))
         }
 
@@ -255,7 +252,7 @@ class EditableBufferBookmarksSQLiteBookmarksModelFactory: SQLiteBookmarksModelFa
     }
 
     override func removeByGUID(_ guid: GUID) -> Success {
-        log.debug("Removing \(guid) from buffer.")
+        //log.debug("Removing \(guid) from buffer.")
         return self.bookmarks.markBufferBookmarkAsDeleted(guid)
     }
 }
@@ -374,7 +371,7 @@ extension SQLiteBookmarks {
 
     // This is only used from tests.
     func clearBookmarks() -> Success {
-        log.warning("CALLING clearBookmarks -- this should only be used from tests.")
+        //log.warning("CALLING clearBookmarks -- this should only be used from tests.")
         return self.db.run([
             ("DELETE FROM bookmarksLocal WHERE parentid IS NOT ?", [BookmarkRoots.RootGUID]),
             self.favicons.getCleanupFaviconsQuery()
@@ -382,7 +379,7 @@ extension SQLiteBookmarks {
     }
 
     public func removeGUIDs(_ guids: [GUID]) -> Success {
-        log.debug("removeGUIDs: \(guids)")
+        //log.debug("removeGUIDs: \(guids)")
 
         // Override any parents that aren't already overridden. We're about to remove some
         // of their children.
@@ -412,7 +409,7 @@ extension SQLiteBookmarks {
     }
 
     fileprivate func overrideParentsOfGUIDs(_ guids: [GUID]) -> Success {
-        log.debug("Overriding parents of \(guids).")
+        //log.debug("Overriding parents of \(guids).")
 
         // TODO: Yes, this can be done in one go.
         let getParentsSQL =
@@ -422,14 +419,14 @@ extension SQLiteBookmarks {
         return self.db.runQuery(getParentsSQL, args: getParentsArgs, factory: { $0[0] as! GUID })
             >>== { parentsCursor in
                 let parents = parentsCursor.asArray()
-                log.debug("Overriding parents: \(parents).")
+                //log.debug("Overriding parents: \(parents).")
                 let (sql, args) = self.getSQLToOverrideFolders(parents, atModifiedTime: Date.now())
                 return self.db.run(sql.map { ($0, args) })
         }
     }
 
     fileprivate func overrideGUIDs(_ guids: [GUID]) -> Success {
-        log.debug("Overriding GUIDs: \(guids).")
+        //log.debug("Overriding GUIDs: \(guids).")
         let (sql, args) = self.getSQLToOverrideNonFolders(guids, atModifiedTime: Date.now())
         return self.db.run(sql.map { ($0, args) })
     }
@@ -442,7 +439,7 @@ extension SQLiteBookmarks {
 
         precondition(BookmarkRoots.All.intersection(guids).isEmpty, "You can't even touch the roots for removal.")
 
-        log.debug("Deleting children of \(guids).")
+        //log.debug("Deleting children of \(guids).")
 
         let topArgs: Args = guids
         let topVarlist = BrowserDB.varlist(topArgs.count)
@@ -452,10 +449,10 @@ extension SQLiteBookmarks {
         return self.db.runQuery(query, args: topArgs, factory: { $0[0] as! GUID })
             >>== { children in
                 let childGUIDs = children.asArray()
-                log.debug("… children of \(guids) are \(childGUIDs).")
+                //log.debug("… children of \(guids) are \(childGUIDs).")
 
                 if childGUIDs.isEmpty {
-                    log.debug("No children; nothing more to do.")
+                    //log.debug("No children; nothing more to do.")
                     return succeed()
                 }
 
@@ -607,7 +604,7 @@ class BookmarkFactory {
 
     // We ignore queries altogether inside the model factory.
     fileprivate class func queryFactory(_ row: SDRow) -> BookmarkItem {
-        log.warning("Creating a BookmarkItem from a query. This is almost certainly unexpected.")
+        //log.warning("Creating a BookmarkItem from a query. This is almost certainly unexpected.")
         let id = row["id"] as? Int
         let guid = row["guid"] as! String
         let title = row["title"] as? String ?? Strings.SQLLiteBookmarkDefaultItemTitle
@@ -867,7 +864,7 @@ open class UnsyncedBookmarksFallbackModelFactory: BookmarksModelFactory {
     }
 
     open func modelForRoot() -> Deferred<Maybe<BookmarksModel>> {
-        log.debug("Getting model for fallback root.")
+        //log.debug("Getting model for fallback root.")
         // Return a virtual model containing "Desktop bookmarks" prepended to the local mobile bookmarks.
         return self.localFactory.folderForGUID(BookmarkRoots.MobileFolderGUID, title: Strings.BookmarksFolderTitleMobile)
             >>== {
@@ -923,10 +920,10 @@ open class MergedSQLiteBookmarks: BookmarksModelFactorySource, KeywordSearchSour
     open var modelFactory: Deferred<Maybe<BookmarksModelFactory>> {
         return self.local.hasOnlyUnmergedRemoteBookmarks() >>== { yes in
             if yes {
-                log.debug("Only unmerged remote bookmarks; using fallback factory.")
+                //log.debug("Only unmerged remote bookmarks; using fallback factory.")
                 return deferMaybe(UnsyncedBookmarksFallbackModelFactory(bookmarks: self.local))
             }
-            log.debug("Using local+mirror bookmark factory.")
+            //log.debug("Using local+mirror bookmark factory.")
             return self.local.modelFactory
         }
     }

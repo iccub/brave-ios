@@ -5,9 +5,6 @@
 import Deferred
 import Foundation
 import Shared
-import XCGLogger
-
-private let log = Logger.syncLogger
 
 extension SQLiteBookmarks: LocalItemSource {
     public func getLocalItemWithGUID(_ guid: GUID) -> Deferred<Maybe<BookmarkMirrorItem>> {
@@ -19,7 +16,7 @@ extension SQLiteBookmarks: LocalItemSource {
     }
 
     public func prefetchLocalItemsWithGUIDs<T: Collection>(_ guids: T) -> Success where T.Iterator.Element == GUID {
-        log.debug("Not implemented for SQLiteBookmarks.")
+        //log.debug("Not implemented for SQLiteBookmarks.")
         return succeed()
     }
 }
@@ -34,7 +31,7 @@ extension SQLiteBookmarks: MirrorItemSource {
     }
 
     public func prefetchMirrorItemsWithGUIDs<T: Collection>(_ guids: T) -> Success where T.Iterator.Element == GUID {
-        log.debug("Not implemented for SQLiteBookmarks.")
+        //log.debug("Not implemented for SQLiteBookmarks.")
         return succeed()
     }
 }
@@ -82,7 +79,7 @@ extension SQLiteBookmarks {
     }
 
     func getSQLToOverrideNonFolders(_ records: [GUID], atModifiedTime modified: Timestamp) -> (sql: [String], args: Args) {
-        log.info("Getting SQL to override \(records).")
+        //log.info("Getting SQL to override \(records).")
         if records.isEmpty {
             return (sql: [], args: [])
         }
@@ -128,7 +125,7 @@ extension SQLiteBookmarks {
      */
     fileprivate func insertBookmarkInTransaction(url: URL, title: String, favicon: Favicon?, intoFolder parent: GUID, withTitle parentTitle: String, conn: SQLiteDBConnection) throws {
 
-        log.debug("Inserting bookmark in transaction on thread \(Thread.current)")
+        //log.debug("Inserting bookmark in transaction on thread \(Thread.current)")
 
         // Keep going if this does not throw.
         func change(_ sql: String, args: Args?, desc: String) throws {
@@ -162,7 +159,7 @@ extension SQLiteBookmarks {
             faviconID = nil
         }
 
-        log.debug("Inserting bookmark with GUID \(newGUID) and specified icon \(faviconID ??? "nil").")
+        //log.debug("Inserting bookmark with GUID \(newGUID) and specified icon \(faviconID ??? "nil").")
 
         // If the caller didn't provide an icon (and they usually don't!),
         // do a reverse lookup in history. We use a view to make this simple.
@@ -243,14 +240,14 @@ extension SQLiteBookmarks {
             if let syncStatus = SyncStatus(rawValue: status) {
                 switch syncStatus {
                 case .synced:
-                    log.debug("We don't expect folders to ever be marked as Synced.")
+                    //log.debug("We don't expect folders to ever be marked as Synced.")
                     try bumpParentStatus(SyncStatus.changed.rawValue)
                 case .new, .changed:
                     // Leave it marked as new or changed, but bump the timestamp.
                     try bumpParentStatus(syncStatus.rawValue)
                 }
             } else {
-                log.warning("Local folder marked with unknown state \(status). This should never occur.")
+                //log.warning("Local folder marked with unknown state \(status). This should never occur.")
                 try bumpParentStatus(SyncStatus.changed.rawValue)
             }
         }
@@ -268,7 +265,7 @@ extension SQLiteBookmarks {
      * Assumption: the provided folder GUID exists in either the local table or the mirror table.
      */
     func insertBookmark(_ url: URL, title: String, favicon: Favicon?, intoFolder parent: GUID, withTitle parentTitle: String) -> Success {
-        log.debug("Inserting bookmark task on thread \(Thread.current)")
+        //log.debug("Inserting bookmark task on thread \(Thread.current)")
         return db.transaction { conn -> Void in
             try self.insertBookmarkInTransaction(url: url, title: title, favicon: favicon, intoFolder: parent, withTitle: parentTitle, conn: conn)
         }
@@ -328,7 +325,7 @@ private extension BookmarkMirrorItem {
 }
 
 private func deleteStructureForGUIDs(_ guids: [GUID], fromTable table: String, connection: SQLiteDBConnection, withMaxVars maxVars: Int=BrowserDB.MaxVariableNumber) throws {
-    log.debug("Deleting \(guids.count) parents from \(table).")
+    //log.debug("Deleting \(guids.count) parents from \(table).")
     let chunks = chunk(guids, by: maxVars)
     for chunk in chunks {
         let delStructure = "DELETE FROM \(table) WHERE parent IN \(BrowserDB.varlist(chunk.count))"
@@ -347,12 +344,12 @@ private func insertStructureIntoTable(_ table: String, connection: SQLiteDBConne
     let maxRowsPerInsert: Int = maxVars / 3
     let chunks = chunk(children, by: maxRowsPerInsert)
     for chunk in chunks {
-        log.verbose("Inserting \(chunk.count)…")
+        //log.verbose("Inserting \(chunk.count)…")
         let childArgs: Args = chunk.flatMap { $0 }   // Flatten [[a, b, c], [...]] into [a, b, c, ...].
         let ins =
             "INSERT INTO \(table) (parent, child, idx) VALUES " +
             Array<String>(repeating: "(?, ?, ?)", count: chunk.count).joined(separator: ", ")
-        log.debug("Inserting \(chunk.count) records (out of \(children.count)).")
+        //log.debug("Inserting \(chunk.count) records (out of \(children.count)).")
         try connection.executeChange(ins, withArgs: childArgs)
     }
 }
@@ -453,18 +450,18 @@ open class SQLiteBookmarkBufferStorage: BookmarkBufferStorage {
             // Deleted records stay in the buffer table so that we know about the deletion
             // when we do a real sync!
 
-            log.debug("\(folders.count) folders and \(deleted.count) deleted maybe-folders to drop from buffer structure table.")
+            //log.debug("\(folders.count) folders and \(deleted.count) deleted maybe-folders to drop from buffer structure table.")
 
             try self.deleteChildrenInTransactionWithGUIDs(folders + deleted, connection: conn)
 
             // (Re-)insert children in chunks.
-            log.debug("Inserting \(children.count) children.")
+            //log.debug("Inserting \(children.count) children.")
             try insertStructureIntoTable(TableBookmarksBufferStructure, connection: conn, children: children, maxVars: maxVars)
 
             // Drop pending deletions of items we just received.
             // In practice that means we have made the choice that we will always
             // discard local deletions if there was a modification or a deletion made remotely.
-            log.debug("Deleting \(guids.count) pending deletions.")
+            //log.debug("Deleting \(guids.count) pending deletions.")
             let chunks = chunk(guids, by: BrowserDB.MaxVariableNumber)
             for chunk in chunks {
                 let delPendingDeletions = "DELETE FROM pending_deletions WHERE id IN \(BrowserDB.varlist(chunk.count))"
@@ -495,7 +492,7 @@ extension SQLiteBookmarkBufferStorage: BufferItemSource {
     }
 
     public func prefetchBufferItemsWithGUIDs<T: Collection>(_ guids: T) -> Success where T.Iterator.Element == GUID {
-        log.debug("Not implemented.")
+        //log.debug("Not implemented.")
         return succeed()
     }
 }
@@ -966,9 +963,9 @@ extension SQLiteBookmarks {
 
 extension SQLiteBookmarkBufferStorage {
     public func applyBufferCompletionOp(_ op: BufferCompletionOp, itemSources: ItemSources) -> Success {
-        log.debug("Marking buffer rows as applied.")
+        //log.debug("Marking buffer rows as applied.")
         if op.isNoOp {
-            log.debug("Nothing to do.")
+            //log.debug("Nothing to do.")
             return succeed()
         }
 
@@ -993,9 +990,9 @@ extension SQLiteBookmarkBufferStorage {
 
 extension MergedSQLiteBookmarks {
     public func applyLocalOverrideCompletionOp(_ op: LocalOverrideCompletionOp, itemSources: ItemSources) -> Success {
-        log.debug("Applying local op to merged.")
+        //log.debug("Applying local op to merged.")
         if op.isNoOp {
-            log.debug("Nothing to do.")
+            //log.debug("Nothing to do.")
             return succeed()
         }
 
@@ -1006,7 +1003,7 @@ extension MergedSQLiteBookmarks {
             // So we can trample the DB in any order.
             try conn.executeChange("PRAGMA defer_foreign_keys = ON")
             
-            log.debug("Deleting \(op.mirrorItemsToDelete.count) mirror items.")
+            //log.debug("Deleting \(op.mirrorItemsToDelete.count) mirror items.")
 
             try op.mirrorItemsToDelete.withSubsetsOfSize(BrowserDB.MaxVariableNumber) { guids in
                 let args: Args = guids.map { $0 }
@@ -1064,14 +1061,14 @@ extension MergedSQLiteBookmarks {
                 // smaller than 999!
                 precondition(guids.count < BrowserDB.MaxVariableNumber)
                 
-                log.debug("Swizzling server modified time to \(time) for \(guids.count) GUIDs.")
+                //log.debug("Swizzling server modified time to \(time) for \(guids.count) GUIDs.")
                 let args: Args = guids.map { $0 }
                 let varlist = BrowserDB.varlist(guids.count)
                 let updateSQL = "UPDATE bookmarksMirror SET server_modified = \(time) WHERE guid IN \(varlist)"
                 try conn.executeChange(updateSQL, withArgs: args)
             }
             
-            log.debug("Marking \(op.processedLocalChanges.count) local changes as processed.")
+            //log.debug("Marking \(op.processedLocalChanges.count) local changes as processed.")
             try op.processedLocalChanges.withSubsetsOfSize(BrowserDB.MaxVariableNumber) { guids in
                 let args: Args = guids.map { $0 }
                 let varlist = BrowserDB.varlist(guids.count)
@@ -1138,9 +1135,9 @@ extension MergedSQLiteBookmarks {
     }
 
     public func applyBufferUpdatedCompletionOp(_ op: BufferUpdatedCompletionOp) -> Success {
-        log.debug("Applying buffer updates.")
+        //log.debug("Applying buffer updates.")
         if op.isNoOp {
-            log.debug("Nothing to do.")
+            //log.debug("Nothing to do.")
             return succeed()
         }
 
@@ -1216,7 +1213,7 @@ extension MergedSQLiteBookmarks {
             if op.bufferValuesToMoveFromLocal.count > 0 {
                 guard let allChildren = op.mobileRoot.children else {
                     let err = DatabaseError(description: "Absent mobileRoot children. Aborting.")
-                    log.error("applyBufferUpdatedCompletionOp encountered error: \(err.localizedDescription)")
+                    //log.error("applyBufferUpdatedCompletionOp encountered error: \(err.localizedDescription)")
                     throw err
                 }
                 let offset = allChildren.count - op.bufferValuesToMoveFromLocal.count

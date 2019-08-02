@@ -6,8 +6,6 @@ import Deferred
 import Foundation
 import Shared
 
-private let log = Logger.syncLogger
-
 private class CachedSource {
     // We track not just mappings between values and non-nil items, but also whether we've tried
     // to look up a value at all. This allows us to distinguish between a cache miss and a
@@ -28,16 +26,16 @@ private class CachedSource {
 
     func lookup(_ guid: GUID) -> Deferred<Maybe<BookmarkMirrorItem>>? {
         guard self.seen.contains(guid) else {
-            log.warning("Cache miss for \(guid).")
+            //log.warning("Cache miss for \(guid).")
             return nil
         }
 
         guard let found = self.cache[guid] else {
-            log.verbose("Cache hit, but no record found for \(guid).")
+            //log.verbose("Cache hit, but no record found for \(guid).")
             return deferMaybe(NoSuchRecordError(guid: guid))
         }
 
-        log.verbose("Cache hit for \(guid).")
+        //log.verbose("Cache hit for \(guid).")
         return deferMaybe(found)
     }
 
@@ -101,7 +99,7 @@ open class CachingLocalItemSource: LocalItemSource {
     }
 
     open func prefetchLocalItemsWithGUIDs<T: Collection>(_ guids: T) -> Success where T.Iterator.Element == GUID {
-        log.debug("Prefetching \(guids.count) local items: \(guids.prefix(10))….")
+        //log.debug("Prefetching \(guids.count) local items: \(guids.prefix(10))….")
         if guids.isEmpty {
             return succeed()
         }
@@ -138,7 +136,7 @@ open class CachingMirrorItemSource: MirrorItemSource {
     }
 
     open func prefetchMirrorItemsWithGUIDs<T: Collection>(_ guids: T) -> Success where T.Iterator.Element == GUID {
-        log.debug("Prefetching \(guids.count) mirror items: \(guids.prefix(10))….")
+        //log.debug("Prefetching \(guids.count) mirror items: \(guids.prefix(10))….")
         if guids.isEmpty {
             return succeed()
         }
@@ -179,7 +177,7 @@ open class CachingBufferItemSource: BufferItemSource {
     }
 
     open func prefetchBufferItemsWithGUIDs<T: Collection>(_ guids: T) -> Success where T.Iterator.Element == GUID {
-        log.debug("Prefetching \(guids.count) buffer items: \(guids.prefix(10))….")
+        //log.debug("Prefetching \(guids.count) buffer items: \(guids.prefix(10))….")
         if guids.isEmpty {
             return succeed()
         }

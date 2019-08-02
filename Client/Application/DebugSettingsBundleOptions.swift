@@ -17,12 +17,6 @@ struct DebugSettingsBundleOptions {
         return UserDefaults.standard.bool(forKey: "SettingsBundleDisableLocalWebServer")
     }
 
-    /// When enabled, the app launch will be replaced with the mail compose view appearing with the device
-    /// logs pre-attached. When the mail is sent, the app continues launching normally.
-    static var launchIntoEmailComposer: Bool {
-        return attachLogsToDebugEmail && MFMailComposeViewController.canSendMail()
-    }
-
     /// When enabled, the email composer will have the application logs attached.
     static var attachLogsToDebugEmail: Bool {
         return UserDefaults.standard.bool(forKey: "SettingsBundleEmailLogsOnLaunch")

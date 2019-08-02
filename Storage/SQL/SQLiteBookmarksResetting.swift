@@ -4,9 +4,6 @@
 
 import Foundation
 import Shared
-import XCGLogger
-
-private let log = Logger.syncLogger
 
 extension MergedSQLiteBookmarks: AccountRemovalDelegate {
     public func onRemovedAccount() -> Success {

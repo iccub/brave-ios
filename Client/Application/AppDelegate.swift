@@ -74,15 +74,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIViewControllerRestorati
             //  literally never use Brave. This bypasses this situation, while not using a modifiable pref.
             KeychainWrapper.sharedAppContainerKeychain.setAuthenticationInfo(nil)
         }
-
-        // Short circuit the app if we want to email logs from the debug menu
-        if DebugSettingsBundleOptions.launchIntoEmailComposer {
-            self.window?.rootViewController = UIViewController()
-            presentEmailComposerWithLogs()
-            return true
-        } else {
-            return startApplication(application, withLaunchOptions: launchOptions)
-        }
+        
+        return startApplication(application, withLaunchOptions: launchOptions)
     }
 
     @discardableResult fileprivate func startApplication(_ application: UIApplication, withLaunchOptions launchOptions: [AnyHashable: Any]?) -> Bool {
@@ -97,12 +90,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIViewControllerRestorati
         DynamicFontHelper.defaultHelper.startObserving()
 
         MenuHelper.defaultHelper.setItems()
-
-        let logDate = Date()
-        // Create a new sync log file on cold app launch. Note that this doesn't roll old logs.
-        Logger.syncLogger.newLogWithDate(logDate)
-
-        Logger.browserLogger.newLogWithDate(logDate)
 
         let profile = getProfile(application)
         let profilePrefix = profile.prefs.getBranchPrefix()
@@ -220,12 +207,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIViewControllerRestorati
         
         authenticator = AppAuthenticator(protectedWindow: window!, promptImmediately: true, isPasscodeEntryCancellable: false)
 
-        // Now roll logs.
-        DispatchQueue.global(qos: DispatchQoS.background.qosClass).async {
-            Logger.syncLogger.deleteOldLogsDownToSizeLimit()
-            Logger.browserLogger.deleteOldLogsDownToSizeLimit()
-        }
-
         // If a shortcut was launched, display its information and take the appropriate action
         if let shortcutItem = launchOptions?[UIApplication.LaunchOptionsKey.shortcutItem] as? UIApplicationShortcutItem {
 
@@ -283,10 +264,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIViewControllerRestorati
         authenticator?.hideBackgroundedBlur()
         
         Preferences.AppState.backgroundedCleanly.value = false
-        
-        guard !DebugSettingsBundleOptions.launchIntoEmailComposer else {
-            return
-        }
 
         if let profile = self.profile {
             profile.reopen()
@@ -419,29 +396,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UIViewControllerRestorati
         // Some sites will only serve HTML that points to .ico files.
         // The FaviconFetcher is explicitly for getting high-res icons, so use the desktop user agent.
         FaviconFetcher.userAgent = UserAgent.desktopUserAgent()
-    }
-
-    fileprivate func presentEmailComposerWithLogs() {
-        if let buildNumber = Bundle.main.object(forInfoDictionaryKey: String(kCFBundleVersionKey)) as? NSString {
-            let mailComposeViewController = MFMailComposeViewController()
-            mailComposeViewController.mailComposeDelegate = self
-            mailComposeViewController.setSubject("Debug Info for iOS client version v\(appVersion) (\(buildNumber))")
-
-            if DebugSettingsBundleOptions.attachLogsToDebugEmail {
-                do {
-                    let logNamesAndData = try Logger.diskLogFilenamesAndData()
-                    logNamesAndData.forEach { nameAndData in
-                        if let data = nameAndData.1 {
-                            mailComposeViewController.addAttachmentData(data, mimeType: "text/plain", fileName: nameAndData.0)
-                        }
-                    }
-                } catch _ {
-                    print("Failed to retrieve logs from device")
-                }
-            }
-
-            self.window?.rootViewController?.present(mailComposeViewController, animated: true, completion: nil)
-        }
     }
 
     func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {

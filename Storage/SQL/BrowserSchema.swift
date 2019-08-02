@@ -4,8 +4,6 @@
 
 import Foundation
 import Shared
-import XCGLogger
-
 
 let _TableBookmarks = "bookmarks"                                      // Removed in v12. Kept for migration.
 let TableBookmarksMirror = "bookmarksMirror"                           // Added in v9.
@@ -118,8 +116,6 @@ private let AllIndices: [String] = [
 
 private let AllTablesIndicesAndViews: [String] = AllViews + AllIndices + AllTables
 
-private let log = Logger.syncLogger
-
 /**
  * The monolithic class that manages the inter-related history etc. tables.
  * We rely on SQLiteHistory having initialized the favicon table first.
@@ -138,15 +134,15 @@ open class BrowserSchema: Schema {
         self.sqliteVersion = v
         self.supportsPartialIndices = v >= 3008000          // 3.8.0.
         let ver = String(cString: sqlite3_libversion())
-        log.info("SQLite version: \(ver) (\(v)).")
+        //log.info("SQLite version: \(ver) (\(v)).")
     }
 
     func run(_ db: SQLiteDBConnection, sql: String, args: Args? = nil) -> Bool {
         do {
             try db.executeChange(sql, withArgs: args)
         } catch let err as NSError {
-            log.error("Error running SQL in BrowserSchema: \(err.localizedDescription)")
-            log.error("SQL was \(sql)")
+            //log.error("Error running SQL in BrowserSchema: \(err.localizedDescription)")
+            //log.error("SQL was \(sql)")
             return false
         }
 
@@ -824,7 +820,7 @@ open class BrowserSchema: Schema {
 
         assert(queries.count == AllTablesIndicesAndViews.count, "Did you forget to add your table, index, or view to the list?")
 
-        log.debug("Creating \(queries.count) tables, views, and indices.")
+        //log.debug("Creating \(queries.count) tables, views, and indices.")
 
         return self.run(db, queries: queries) &&
                self.prepopulateRootFolders(db)
@@ -833,7 +829,7 @@ open class BrowserSchema: Schema {
     public func update(_ db: SQLiteDBConnection, from: Int) -> Bool {
         let to = self.version
         if from == to {
-            log.debug("Skipping update from \(from) to \(to).")
+            //log.debug("Skipping update from \(from) to \(to).")
             return true
         }
 
@@ -858,17 +854,17 @@ open class BrowserSchema: Schema {
 
             // Otherwise, this is likely an upgrade from before Bug 1160399, so
             // let's drop and re-create.
-            log.debug("Updating schema \(self.name) from zero. Assuming drop and recreate.")
+            //log.debug("Updating schema \(self.name) from zero. Assuming drop and recreate.")
             return drop(db) && create(db)
         }
 
         if from > to {
             // This is likely an upgrade from before Bug 1160399.
-            log.debug("Downgrading browser tables. Assuming drop and recreate.")
+            //log.debug("Downgrading browser tables. Assuming drop and recreate.")
             return drop(db) && create(db)
         }
 
-        log.debug("Updating schema \(self.name) from \(from) to \(to).")
+        //log.debug("Updating schema \(self.name) from \(from) to \(to).")
 
         if from < 4 && to >= 4 {
             return drop(db) && create(db)
@@ -1261,7 +1257,7 @@ open class BrowserSchema: Schema {
     }
     
     fileprivate func migrateFromSchemaTableIfNeeded(_ db: SQLiteDBConnection) -> Bool {
-        log.info("Checking if schema table migration is needed.")
+        //log.info("Checking if schema table migration is needed.")
 
         // If `PRAGMA user_version` is v31 or later, we don't need to do anything here.
         guard db.version < 31 else {
@@ -1299,13 +1295,13 @@ open class BrowserSchema: Schema {
         // No other intermediate migrations are needed for the remaining tables and
         // we have already captured the *previous* schema version specified in
         // `tableList`, so we can now safely drop it.
-        log.info("Schema table migrations complete; Dropping 'tableList' table.")
+        //log.info("Schema table migrations complete; Dropping 'tableList' table.")
 
         let sql = "DROP TABLE IF EXISTS tableList"
         do {
             try db.executeChange(sql)
         } catch {
-            log.error("Error dropping tableList table: \(error.localizedDescription)")
+            //log.error("Error dropping tableList table: \(error.localizedDescription)")
             return false
         }
 
@@ -1314,7 +1310,7 @@ open class BrowserSchema: Schema {
         do {
             try db.setVersion(previousVersion)
         } catch {
-            log.error("Error setting database version: \(error.localizedDescription)")
+            //log.error("Error setting database version: \(error.localizedDescription)")
             return false
         }
         
@@ -1350,14 +1346,14 @@ open class BrowserSchema: Schema {
             return .skipped
         }
         
-        log.info("Migrating 'clients' table from version \(previousClientsTableVersion).")
+        //log.info("Migrating 'clients' table from version \(previousClientsTableVersion).")
         
         if previousClientsTableVersion < 2 {
             let sql = "ALTER TABLE clients ADD COLUMN version TEXT"
             do {
                 try db.executeChange(sql)
             } catch let err as NSError {
-                log.error("Error altering clients table: \(err.localizedDescription); SQL was \(sql)")
+                //log.error("Error altering clients table: \(err.localizedDescription); SQL was \(sql)")
                 return .failure
             }
         }
@@ -1367,7 +1363,7 @@ open class BrowserSchema: Schema {
             do {
                 try db.executeChange(sql)
             } catch let err as NSError {
-                log.error("Error altering clients table: \(err.localizedDescription); SQL was \(sql)")
+                //log.error("Error altering clients table: \(err.localizedDescription); SQL was \(sql)")
                 return .failure
             }
         }
@@ -1394,7 +1390,7 @@ open class BrowserSchema: Schema {
         let tmpTable = "tmp_hostnames"
         let table = "CREATE TEMP TABLE \(tmpTable) (url TEXT NOT NULL UNIQUE, domain TEXT NOT NULL, domain_id INT)"
         if !self.run(db, sql: table, args: nil) {
-            log.error("Can't create temporary table. Unable to migrate domain names. Top Sites is likely to be broken.")
+            //log.error("Can't create temporary table. Unable to migrate domain names. Top Sites is likely to be broken.")
             return false
         }
 
@@ -1405,7 +1401,7 @@ open class BrowserSchema: Schema {
                 "INSERT INTO \(tmpTable) (url, domain) VALUES " +
                 Array<String>(repeating: "(?, ?)", count: chunk.count / 2).joined(separator: ", ")
             if !self.run(db, sql: ins, args: Array(chunk)) {
-                log.error("Couldn't insert domains into temporary table. Aborting migration.")
+                //log.error("Couldn't insert domains into temporary table. Aborting migration.")
                 return false
             }
         }
@@ -1427,7 +1423,7 @@ open class BrowserSchema: Schema {
                                    domainIDs,
                                    updateHistory,
                                    dropTemp]) {
-            log.error("Unable to migrate domains.")
+            //log.error("Unable to migrate domains.")
             return false
         }
 
@@ -1435,7 +1431,7 @@ open class BrowserSchema: Schema {
     }
 
     public func drop(_ db: SQLiteDBConnection) -> Bool {
-        log.debug("Dropping all browser tables.")
+        //log.debug("Dropping all browser tables.")
         let additional = [
             "DROP TABLE IF EXISTS faviconSites" // We renamed it to match naming convention.
         ]

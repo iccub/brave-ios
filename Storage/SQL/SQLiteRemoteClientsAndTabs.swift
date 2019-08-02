@@ -4,10 +4,7 @@
 
 import Foundation
 import Shared
-import XCGLogger
 import Deferred
-
-private let log = Logger.syncLogger
 
 open class SQLiteRemoteClientsAndTabs: RemoteClientsAndTabs {
     let db: BrowserDB
@@ -97,7 +94,7 @@ open class SQLiteRemoteClientsAndTabs: RemoteClientsAndTabs {
                 try connection.executeChange("INSERT INTO tabs (client_guid, url, title, history, last_used) VALUES (?, ?, ?, ?, ?)", withArgs: args)
                 
                 if connection.lastInsertedRowID == lastInsertedRowID {
-                    log.debug("Unable to INSERT RemoteTab!")
+                    //log.debug("Unable to INSERT RemoteTab!")
                 } else {
                     inserted += 1
                 }
@@ -145,7 +142,7 @@ open class SQLiteRemoteClientsAndTabs: RemoteClientsAndTabs {
                     try connection.executeChange("INSERT INTO clients (guid, name, modified, type, formfactor, os, version, fxaDeviceId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", withArgs: args)
                     
                     if connection.lastInsertedRowID == lastInsertedRowID {
-                        log.debug("INSERT did not change last inserted row ID.")
+                        //log.debug("INSERT did not change last inserted row ID.")
                     }
                 }
                 
@@ -211,10 +208,10 @@ open class SQLiteRemoteClientsAndTabs: RemoteClientsAndTabs {
             clientArgs = nil
         }
 
-        log.debug("Looking for tabs for client with guid: \(guid ?? "nil")")
+        //log.debug("Looking for tabs for client with guid: \(guid ?? "nil")")
         return db.runQuery(tabsSQL, args: clientArgs, factory: SQLiteRemoteClientsAndTabs.remoteTabFactory) >>== {
             let tabs = $0.asArray()
-            log.debug("Found \(tabs.count) tabs for client with guid: \(guid ?? "nil")")
+            //log.debug("Found \(tabs.count) tabs for client with guid: \(guid ?? "nil")")
             return deferMaybe(tabs)
         }
     }
@@ -240,7 +237,7 @@ open class SQLiteRemoteClientsAndTabs: RemoteClientsAndTabs {
                         acc[guid]!.append(tab)
                     }
                 } else {
-                    log.error("RemoteTab (\(tab)) has a nil clientGUID")
+                    //log.error("RemoteTab (\(tab)) has a nil clientGUID")
                 }
             }
 
@@ -278,13 +275,13 @@ open class SQLiteRemoteClientsAndTabs: RemoteClientsAndTabs {
                 for client in clients {
                     do {
                         if let commandID = try self.insert(connection, sql: "INSERT INTO commands (client_guid, value) VALUES (?, ?)", args: [client.guid, command.value] as Args) {
-                            log.verbose("Inserted command: \(commandID)")
+                            //log.verbose("Inserted command: \(commandID)")
                             numberOfInserts += 1
                         } else {
-                            log.warning("Command not inserted, but no error!")
+                            //log.warning("Command not inserted, but no error!")
                         }
                     } catch let err as NSError {
-                        log.error("insertCommands(_:, forClients:) failed: \(err.localizedDescription) (numberOfInserts: \(numberOfInserts)")
+                        //log.error("insertCommands(_:, forClients:) failed: \(err.localizedDescription) (numberOfInserts: \(numberOfInserts)")
                         throw err
                     }
                 }
@@ -326,7 +323,7 @@ open class SQLiteRemoteClientsAndTabs: RemoteClientsAndTabs {
         
         let id = db.lastInsertedRowID
         if id == lastID {
-            log.debug("INSERT did not change last inserted row ID.")
+            //log.debug("INSERT did not change last inserted row ID.")
             return nil
         }
         
@@ -374,7 +371,7 @@ extension SQLiteRemoteClientsAndTabs: ResettableSyncStorage {
 
 extension SQLiteRemoteClientsAndTabs: AccountRemovalDelegate {
     public func onRemovedAccount() -> Success {
-        log.info("Clearing clients and tabs after account removal.")
+        //log.info("Clearing clients and tabs after account removal.")
         // TODO: Bug 1168690 - delete our client and tabs records from the server.
         return self.resetClient()
     }

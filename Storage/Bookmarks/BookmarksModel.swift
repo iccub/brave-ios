@@ -6,8 +6,6 @@ import Deferred
 import Foundation
 import Shared
 
-private let log = Logger.syncLogger
-
 /**
  * The kinda-immutable base interface for bookmarks and folders.
  */
@@ -118,7 +116,7 @@ open class BookmarksModel: BookmarksModelFactorySource {
         if let removedRoot = self.current.removeItemWithGUID(guid) {
             return BookmarksModel(modelFactory: self.factory, root: removedRoot)
         }
-        log.warning("BookmarksModel.removeGUIDFromCurrent did not remove anything. Check to make sure you're not using the abstract BookmarkFolder class.")
+        //log.warning("BookmarksModel.removeGUIDFromCurrent did not remove anything. Check to make sure you're not using the abstract BookmarkFolder class.")
         return self
     }
 
@@ -290,7 +288,7 @@ open class PrependedBookmarkFolder: BookmarkFolder {
 
     override open func removeItemWithGUID(_ guid: GUID) -> BookmarkFolder? {
         guard let removedFolder = main.removeItemWithGUID(guid) else {
-            log.warning("Failed to remove child item from prepended folder. Check that main folder overrides removeItemWithGUID.")
+            //log.warning("Failed to remove child item from prepended folder. Check that main folder overrides removeItemWithGUID.")
             return nil
         }
         return PrependedBookmarkFolder(main: removedFolder, prepend: prepend)

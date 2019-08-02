@@ -4,10 +4,7 @@
 
 import Foundation
 import Shared
-import XCGLogger
 import Deferred
-
-fileprivate let log = Logger.syncLogger
 
 extension SQLiteHistory: HistoryRecommendations {
     // Bookmarks Query

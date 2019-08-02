@@ -74,7 +74,7 @@ open class DiskImageStore {
                     self.keys.insert(key)
                     return succeed()
                 } catch {
-                    log.error("Unable to write image to disk: \(error)")
+                    //log.error("Unable to write image to disk: \(error)")
                 }
             }
 
@@ -92,7 +92,7 @@ open class DiskImageStore {
                 do {
                     try FileManager.default.removeItem(at: url)
                 } catch {
-                    log.warning("Failed to remove DiskImageStore item at \(url.absoluteString): \(error)")
+                    //log.warning("Failed to remove DiskImageStore item at \(url.absoluteString): \(error)")
                 }
             }
 

@@ -112,7 +112,7 @@ public extension PushClient {
         mutableURLRequest.httpBody = JSON(parameters).stringValue()?.utf8EncodedData
 
         if experimentalMode {
-            log.info("curl -X POST \(registerURL.absoluteString) --data '\(JSON(parameters).stringValue()!)'")
+            //log.info("curl -X POST \(registerURL.absoluteString) --data '\(JSON(parameters).stringValue()!)'")
         }
 
         return send(request: mutableURLRequest) >>== { json in
@@ -156,7 +156,7 @@ public extension PushClient {
 /// Utilities
 extension PushClient {
     fileprivate func send(request: URLRequest) -> Deferred<Maybe<JSON>> {
-        log.info("\(request.httpMethod!) \(request.url?.absoluteString ?? "nil")")
+        //log.info("\(request.httpMethod!) \(request.url?.absoluteString ?? "nil")")
         let deferred = Deferred<Maybe<JSON>>()
         alamofire.request(request)
             .validate(contentType: ["application/json"])

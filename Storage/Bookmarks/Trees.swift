@@ -5,8 +5,6 @@
 import Foundation
 import Shared
 
-private let log = Logger.syncLogger
-
 // MARK: - Defining a tree structure for syncability.
 public enum BookmarkTreeNode: Comparable {
     indirect case folder(guid: GUID, children: [BookmarkTreeNode])

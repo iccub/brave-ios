@@ -9,16 +9,14 @@
 // increased startup times which may lead to termination by the OS.
 import Shared
 import Storage
-import XCGLogger
 import SwiftKeychainWrapper
 import Deferred
+import os.log
 
 // Import these dependencies ONLY for the main `Client` application target.
 #if MOZ_TARGET_CLIENT
     import SwiftyJSON
 #endif
-
-private let log = Logger.syncLogger
 
 public let ProfileRemoteTabsSyncDelay: TimeInterval = 0.1
 
@@ -36,7 +34,7 @@ class ProfileFileAccessor: FileAccessor {
         if let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: sharedContainerIdentifier) {
             rootPath = url.path
         } else {
-            log.error("Unable to find the shared container. Defaulting profile location to ~/Documents instead.")
+            os_log(.error, log: Log.browser, "Unable to find the shared container. Defaulting profile location to ~/Documents instead.")
             rootPath = (NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0])
         }
 
@@ -134,7 +132,8 @@ open class BrowserProfile: Profile {
      * and initialize the logins.db.
      */
     init(localName: String, clear: Bool = false) {
-        log.debug("Initing profile \(localName) on thread \(Thread.current).")
+        os_log(.debug, log: Log.browser, "Initing profile %s on thread %s",
+               localName, String(describing: Thread.current))
         self.name = localName
         self.files = ProfileFileAccessor(localName: localName)
         self.keychain = KeychainWrapper.sharedAppContainerKeychain
@@ -146,7 +145,7 @@ open class BrowserProfile: Profile {
                 // …then remove the directory itself.
                 try self.files.remove("")
             } catch {
-                log.info("Cannot clear profile: \(error)")
+                os_log(.error, log: Log.browser, "Cannot clear profile: %s", error.localizedDescription)
             }
         }
 
@@ -164,7 +163,7 @@ open class BrowserProfile: Profile {
         notificationCenter.addObserver(self, selector: #selector(onPageMetadataFetched), name: .OnPageMetadataFetched, object: nil)
 
         if isNewProfile {
-            log.info("New profile. Removing old account metadata.")
+            os_log(.info, log: Log.browser, "New profile. Removing old account metadata.")
             prefs.clearAll()
         }
 
@@ -180,7 +179,7 @@ open class BrowserProfile: Profile {
     }
 
     func reopen() {
-        log.debug("Reopening profile.")
+        os_log(.debug, log: Log.browser, "Reopening profile")
         isShutdown = false
         
         db.reopenIfClosed()
@@ -188,7 +187,7 @@ open class BrowserProfile: Profile {
     }
 
     func shutdown() {
-        log.debug("Shutting down profile.")
+        os_log(.debug, log: Log.browser, "Shutting down profile")
         isShutdown = true
 
         db.forceClose()
@@ -212,7 +211,7 @@ open class BrowserProfile: Profile {
 
             history.setTopSitesNeedsInvalidation()
         } else {
-            log.debug("Ignoring navigation.")
+            os_log(.debug, log: Log.browser, "Ignoring navigation.")
         }
     }
 
@@ -220,12 +219,12 @@ open class BrowserProfile: Profile {
     func onPageMetadataFetched(notification: NSNotification) {
         let tabType = notification.userInfo?["tabType"] as? TabType ?? .regular
         guard !tabType.isPrivate else {
-            log.debug("Private mode - Ignoring page metadata.")
+            os_log(.debug, log: Log.browser, "Private mode - Ignoring page metadata.")
             return
         }
         guard let pageURL = notification.userInfo?["tabURL"] as? URL,
               let pageMetadata = notification.userInfo?["pageMetadata"] as? PageMetadata else {
-            log.debug("Metadata notification doesn't contain any metadata!")
+            os_log(.debug, log: Log.browser, "Metadata notification doesn't contain any metadata!")
             return
         }
         let defaultMetadataTTL: UInt64 = 3 * 24 * 60 * 60 * 1000 // 3 days for the metadata to live
@@ -233,7 +232,7 @@ open class BrowserProfile: Profile {
     }
 
     deinit {
-        log.debug("Deiniting profile \(self.localName()).")
+        os_log(.debug, log: Log.browser, "Deiniting profile %s.", self.localName())
     }
 
     func localName() -> String {
