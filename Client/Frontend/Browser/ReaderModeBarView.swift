@@ -5,7 +5,6 @@
 import UIKit
 import SnapKit
 import Shared
-import XCGLogger
 
 enum ReaderModeBarButtonType {
     case settings

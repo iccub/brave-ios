@@ -5,7 +5,6 @@
 import Foundation
 import CoreData
 import Shared
-import XCGLogger
 import os.log
 
 // TODO: Creatable, Updateable. Those are not needed at the moment.

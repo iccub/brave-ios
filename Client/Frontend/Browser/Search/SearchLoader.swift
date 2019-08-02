@@ -5,7 +5,6 @@
 import Foundation
 import Shared
 import Storage
-import XCGLogger
 import Deferred
 import Data
 

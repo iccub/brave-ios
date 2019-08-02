@@ -3,7 +3,6 @@
 import UIKit
 import CoreData
 import Shared
-import XCGLogger
 import os.log
 
 /// A helper structure for `DataController.perform()` method

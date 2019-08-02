@@ -6,7 +6,6 @@ import Foundation
 import Storage
 
 import Shared
-import XCGLogger
 
 enum ShortcutType: String {
     case newTab = "NewTab"

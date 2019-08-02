@@ -9,7 +9,6 @@ import WebKit
 import Shared
 import Storage
 import SnapKit
-import XCGLogger
 import Alamofire
 import MobileCoreServices
 import SwiftyJSON

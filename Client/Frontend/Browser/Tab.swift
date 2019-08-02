@@ -8,7 +8,6 @@ import Storage
 import Shared
 import BraveShared
 import SwiftyJSON
-import XCGLogger
 import Data
 import os.log
 

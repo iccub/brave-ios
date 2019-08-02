@@ -6,7 +6,6 @@ import Foundation
 import FastImageCache
 import Shared
 import WebKit
-import XCGLogger
 import os.log
 
 /// Properties we want to extract from Tab/TabManager and save in TabMO

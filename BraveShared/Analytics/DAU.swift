@@ -2,7 +2,6 @@
 
 import Foundation
 import Shared
-import XCGLogger
 import os.log
 
 public class DAU {

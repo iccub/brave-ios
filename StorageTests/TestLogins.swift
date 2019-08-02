@@ -5,11 +5,7 @@
 import Foundation
 import Shared
 @testable import Storage
-import XCGLogger
-
 import XCTest
-
-private let log = XCGLogger.default
 
 class TestSQLiteLogins: XCTestCase {
     var db: BrowserDB!

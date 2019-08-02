@@ -5,7 +5,6 @@
 import UIKit
 import Shared
 import BraveShared
-import XCGLogger
 import Storage
 import Deferred
 import Data

@@ -5,7 +5,6 @@
 import UIKit
 import Shared
 import SnapKit
-import XCGLogger
 import BraveShared
 
 protocol TabLocationViewDelegate {

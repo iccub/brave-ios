@@ -6,7 +6,6 @@ import Foundation
 import Shared
 import BraveShared
 import Storage
-import XCGLogger
 import WebKit
 import Deferred
 import SwiftyJSON
