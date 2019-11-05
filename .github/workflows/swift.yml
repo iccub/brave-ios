@@ -1,6 +1,6 @@
 name: Swift
 
-on: [push, pull_request]
+on: [watch]
 
 jobs:
   test:
