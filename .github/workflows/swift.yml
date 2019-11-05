@@ -1,6 +1,6 @@
 name: Swift
 
-on: [watch]
+on: [push, watch]
 
 jobs:
   test:
@@ -9,7 +9,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    - name: Build
-      run: swift build -v
+    - name: Run bootstrap script
+      run: ./bootstrap.sh
     - name: Run tests
-      run: swift test -v
+      run: fastlane ios test
