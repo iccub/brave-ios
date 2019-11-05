@@ -10,6 +10,9 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v1
+      - name: install dependencies
+        run: |
+          brew install swiftlint
       - name: Run bootstrap script
         run: ./bootstrap.sh
       - name: Run tests
