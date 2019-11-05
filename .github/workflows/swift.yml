@@ -1,13 +1,15 @@
-name: Swift
+name: ios
 
 on: [push, watch]
 
 jobs:
   test:
+    name: test
     runs-on: macOS-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - name: checkout
+        uses: actions/checkout@development
       - name: Run bootstrap script
         run: ./bootstrap.sh
       - name: Run tests
