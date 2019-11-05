@@ -4,12 +4,11 @@ on: [push, watch]
 
 jobs:
   test:
-
     runs-on: macOS-latest
 
     steps:
-    - uses: actions/checkout@v1
-    - name: Run bootstrap script
-      run: ./bootstrap.sh
-    - name: Run tests
-      run: fastlane ios test
+      - uses: actions/checkout@v1
+      - name: Run bootstrap script
+        run: ./bootstrap.sh
+      - name: Run tests
+        run: fastlane ios test
