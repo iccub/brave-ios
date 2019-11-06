@@ -13,7 +13,13 @@ jobs:
       - name: install dependencies
         run: |
           brew install swiftlint
+      - name: update node
+        uses: actions/setup-node@v1
+        with:
+          node-version: '11.x'
       - name: Run bootstrap script
         run: ./bootstrap.sh -ci
       - name: Run tests
-        run: fastlane ios test
+        run: |
+          set -o pipefail
+          fastlane ios test
