@@ -21,7 +21,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: Carthage
-          key: ${{ $DEVELOPER_DIR }}-carthage-${{ hashFiles('**/Cartfile.resolved') }}
+          key: ${{ env.DEVELOPER_DIR }}-carthage-${{ hashFiles('**/Cartfile.resolved') }}
           restore-keys: |
             ${{ runner.os }}-carthage-
       - name: Run bootstrap script
