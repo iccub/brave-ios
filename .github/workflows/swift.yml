@@ -19,7 +19,7 @@ jobs:
           path: Carthage
           key: ${{ env.DEVELOPER_DIR }}-carthage-${{ hashFiles('**/Cartfile.resolved') }}
           restore-keys: |
-            ${{ runner.os }}-carthage-
+            ${{ env.DEVELOPER_DIR }}-carthage-
       - name: update node
         uses: actions/setup-node@v1
         with:
