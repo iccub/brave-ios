@@ -1,4 +1,4 @@
-name: Test1
+name: Test
 
 on: [push, pull_request]
 
@@ -6,6 +6,8 @@ jobs:
   test:
     name: test
     runs-on: macOS-latest
+    env:
+        XCODE_VERSION: 11.1
 
     steps:
       - name: Checkout
@@ -13,6 +15,8 @@ jobs:
       - name: install dependencies
         run: |
           brew install swiftlint
+      - name: Select XCode
+        run: sudo xcode-select --switch /Applications/Xcode_${{ $XCODE_VERSION }}.app
       - name: update node
         uses: actions/setup-node@v1
         with:
@@ -21,9 +25,9 @@ jobs:
         uses: actions/cache@v1
         with:
           path: Carthage
-          key: ${{ runner.os }}-carthage-${{ hashFiles('**/Cartfile.resolved') }}
+          key: ${{ $XCODE_VERSION }}-carthage-${{ hashFiles('**/Cartfile.resolved') }}
           restore-keys: |
-            ${{ runner.os }}-carthage-
+            ${{ $XCODE_VERSION }}-carthage-
       - name: Run bootstrap script
         run: ./bootstrap.sh -ci
       - name: Run tests
