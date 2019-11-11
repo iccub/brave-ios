@@ -1,10 +1,10 @@
 name: Build
 
-on: pull_request
+on: [push, pull_request]
 
 jobs:
-  test:
-    name: Run tests
+  build:
+    name: Build
     runs-on: macOS-latest
     env:
         # The XCode version to use. If you want to update it please refer to this document:
@@ -36,6 +36,12 @@ jobs:
             carthage-
       - name: Run bootstrap script
         run: ./bootstrap.sh --ci
+
+  test:
+    if: github.event_name == 'pull_request'
+    name: Run Tests
+
+    steps:
       - name: Run tests
         run: |
           set -o pipefail
