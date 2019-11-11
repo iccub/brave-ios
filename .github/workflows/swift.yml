@@ -3,8 +3,8 @@ name: Build
 on: [push, pull_request]
 
 jobs:
-  build:
-    name: Build
+  test:
+    name: Run tests
     runs-on: macOS-latest
     env:
         # The XCode version to use. If you want to update it please refer to this document:
@@ -26,6 +26,7 @@ jobs:
         with:
           node-version: '11.x'
       - name: Cache carthage
+        id: cache-carthage
         uses: actions/cache@v1
         with:
           path: Carthage
@@ -35,15 +36,10 @@ jobs:
             carthage-${{ env.XCODE_VERSION }}-
             carthage-
       - name: Run bootstrap script
+        if: github.event_name == 'pull_request' || (github.event_name == 'push' && steps.cache-carthage.outputs.cache-hit != 'true')
         run: ./bootstrap.sh --ci
-
-  test:
-    if: github.event_name == 'pull_request'
-    name: Run Tests
-    runs-on: macOS-latest
-
-    steps:
       - name: Run tests
+        if: github.event_name == 'pull_request'
         run: |
           set -o pipefail
           fastlane ios test
