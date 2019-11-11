@@ -1,10 +1,10 @@
-name: Test
+name: Build
 
 on: pull_request
 
 jobs:
   test:
-    name: test
+    name: Run tests
     runs-on: macOS-latest
     env:
         # The XCode version to use. If you want to update it please refer to this document:
@@ -35,7 +35,7 @@ jobs:
             carthage-${{ env.XCODE_VERSION }}-
             carthage-
       - name: Run bootstrap script
-        run: ./bootstrap.sh -ci
+        run: ./bootstrap.sh --ci
       - name: Run tests
         run: |
           set -o pipefail
