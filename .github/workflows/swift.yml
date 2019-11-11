@@ -36,6 +36,7 @@ jobs:
             carthage-${{ env.XCODE_VERSION }}-
             carthage-
       - name: Run bootstrap script
+        # Don't run bootstrap script on push action if cache exists.
         if: github.event_name == 'pull_request' || (github.event_name == 'push' && steps.cache-carthage.outputs.cache-hit != 'true')
         run: ./bootstrap.sh --ci
       - name: Run tests
